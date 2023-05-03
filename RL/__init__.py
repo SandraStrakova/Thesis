@@ -6,7 +6,7 @@ from sklearn import preprocessing
 import numpy as np
 plt.switch_backend('agg')
 
-dict = "~\Desktop\RL\\"
+dict = "~\Documents\GitHub\Thesis\RL\\"
 
 """
 Parameters in psychological model
