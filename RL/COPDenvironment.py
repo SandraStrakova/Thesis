@@ -22,8 +22,8 @@ class HumanEnv(gym.Env):
         0	The notification left           0          __init__.max_notification => normalized into (0-1)
         1	Decision points from last PA    0          __init__.max_decsionPerWeek - 1 => normalized into (0-1)
         2   Decision points from last notification 0   __init__.max_decsionPerWeek - 1 => normalized into (0-1)
-        3   Date in a week                  0          6 -> one hot encoding
-        4   Index in a day                  1          24 -> continous
+        3   Day in a week                   0          6 -> one hot encoding
+        4   Hour                            1          24 -> continous
        
         
         5   Goal Achievement                0          1 
