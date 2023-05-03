@@ -1,5 +1,5 @@
 ### This is the python code for simulation experiments in Wang, Zhang, Krose, & van Hoof, 2021
-import gym
+import gym as gym
 import math
 from gym import spaces, logger
 from gym.utils import seeding
@@ -71,7 +71,7 @@ class HumanEnv(gym.Env):
         Return: initial observation state (np.array)
         """
 
-        self.random_index = randrange(1800) * init.max_decsionPerDay
+        self.random_index = randrange(1700) #* init.max_decsionPerDay
         self.calendars = self.generateCalendar(num_episode, self.random_index, df)  # generate all calendars from data
         self.current_episode = None
         self.current_index = None
@@ -127,9 +127,11 @@ class HumanEnv(gym.Env):
     def generateCalendar(self, num, start_index, df):
 
         calendars = np.empty((0, 0), dtype='object')
+        
         for i in range(num):
             # add one weekCalendar in np.array
-            calendars = np.append(calendars, weekCalendar.weekMatrix(init.dayOfWeek, init.max_decsionPerDay, start_index, i, df))
+            calendars = np.append(calendars, weekCalendar.weekMatrix(init.dayOfWeek, init.max_decsionPerDay, start_index, i, df)) # n_width,  n_height, start_index_in_data, episode, df
+        
         return calendars
 
     ##
@@ -175,6 +177,8 @@ class HumanEnv(gym.Env):
 
         if self.last_notification_index is None:
             # set there is no notification ever, initialization based on random initialized memory
+            print("init memory: ", self.human.getMemory())
+            print("init memory scale: ", init.memory_scale)
             self.last_notification_index = - math.log(self.human.getMemory(), init.memory_scale)
         else:  # continue from last calendar
             self.last_notification_index = self.last_notification_index - init.max_decsionPerWeek

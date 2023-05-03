@@ -26,8 +26,8 @@ def saveInternalLearning(calendar, i_run, i_episode, name):
         Save the learning detailed info of a week in files (not all episodes).
     """
     
-    file = init.dict + "finalresult/"
-    path = os.path.expanduser(file + name + "/")
+    file = init.dict + "finalresult\\"
+    path = os.path.expanduser(file + name + "\\")
     
     data = np.asarray(calendar.returnCalendar())
     
@@ -46,8 +46,8 @@ def saveParameter(env, agent, name, i_run):
             random_notifications_list (List of arrays): a list of index representing when a notification is sent,
             which was randomly generated for 'random_week algorithm' or 'random_day algorithm'
     """
-    file = init.dict + "finalresult/"
-    path = os.path.expanduser(file + name + "_policy/")
+    file = init.dict + "finalresult\\"
+    path = os.path.expanduser(file + name + "_policy\\")
 
     index_in_data = env.getRandom_index()
     init_memory = env.getInit_memory()
@@ -79,8 +79,9 @@ def saveTofile(data, name, i_run):
 
     """data = a list of rewards"""
     #"~/Workspace/run/result/"
+
     path = os.path.expanduser(init.dict + "finalresult/")
-    with open(path + name + '_' + str(i_run) + '.csv', 'wb') as myfile:
+    with open(path + name + '_' + str(i_run) + '.csv', 'w') as myfile:  #'wb'
         wr = csv.writer(myfile, delimiter=',')
         wr.writerow(data)
 

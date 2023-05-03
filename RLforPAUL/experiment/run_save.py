@@ -4,6 +4,7 @@ import numpy as np
 import saveInfo
 import os
 import torch
+import decisionPoint
 
 """" Some functions to control different running environments of algorithms (differ training and testing; with and without restriction) """
 
@@ -233,7 +234,7 @@ def run_random(agent, name, env, i_run):
     """
             the run function for random-setup algorithms (random_week and random_day)
     """
-
+    print("starting random")
     episode_rewards = []  # the total reward at each timestamp in one episode
     # average_rewards = []    # the average reward for episodes by now
 
@@ -258,12 +259,14 @@ def run_random(agent, name, env, i_run):
 
         """" training: loop the steps in each episode """
         for t in range(init.args.num_steps):
+    
             action, log_prob, current_prob = agent.select_action(t, state)
             ## action = action.cpu()
 
             # env.step(self, action): Step the environment using the chosen action by one timestep.
             # Return observation (np.array), reward (float), done (boolean), info (dict) """
             state, reward, done, info = env.step(action.numpy()[0])
+            #print("info: ", info)
 
             # save all the rewards in this episode
             rewards.append(reward)
@@ -339,11 +342,11 @@ def getWrongNotification(calenders, i_episode):
             # calculate which date it is now
             date = index / init.max_decsionPerDay
             # for all decision points after this run before next day, if there is a notification sent
-            for next_index in range (index+1, (date+1) * init.max_decsionPerDay):
+            for next_index in range (index+1, int((date+1) * init.max_decsionPerDay)):
                 if calenders[i_episode].getGrid(next_index).getNotification():
                     wrong_notification = wrong_notification + 1.0
         
-            if calenders[i_episode].getGrid(index + 1).getNotification():
+            if calenders[i_episode].getGrid(index+1).getNotification():
                     extra_wrong_notification = extra_wrong_notification + 1.0
 
     return wrong_notification, extra_wrong_notification

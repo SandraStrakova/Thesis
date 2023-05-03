@@ -25,17 +25,18 @@ class weekMatrix(object):
         self.n_height = n_height
         self.n_width = n_width
         self.len = n_width * n_height
-        self.index_in_data = start_index_in_data + episode * init.max_decsionPerWeek
+        self.index_in_data = start_index_in_data #+ episode * init.max_decsionPerWeek
         self.total_run = 0
         self.notification_left = init.max_notification
         self.reward_total = 0.0
         for x in range(self.n_width):
             for y in range(self.n_height):
-                self.grids.append(decisionPoint.decisionPoint(episode, x, y, self.readContext(self.index_in_data, init.max_decsionPerDay * x + y, df)))
+                self.grids.append(decisionPoint.decisionPoint(episode, x, y, self.readContext(self.index_in_data, init.max_decsionPerDay * x + y, df))) #init.max_decsionPerDay * x + y
 
     def readContext(self, start_index, index, df):
         # ['Weekday', 'Hour', 'Temperatuur', 'WeerType', 'WindType', 'LuchtvochtigheidType']
-        state = df.iloc[start_index + index]
+        state = df.iloc[start_index] # + index]
+        #print(state)
         return np.array(state)
 
     ##
@@ -43,6 +44,8 @@ class weekMatrix(object):
     # return object of decision point
     ##
     def getGrid(self, index):
+        #print("index is ", index)	
+        #print("len ", len(self.grids))
         return self.grids[index]
 
     def setTotalRun(self, total_run):

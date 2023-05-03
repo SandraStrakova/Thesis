@@ -6,7 +6,7 @@ from sklearn import preprocessing
 import numpy as np
 plt.switch_backend('agg')
 
-dict = "~/Workspace/pilot/"
+dict = "~\Desktop\RLforPAUL-main\experiment\\"
 
 """
 Parameters in psychological model
@@ -53,11 +53,11 @@ parser.add_argument('--exploration_end', type=int, default=100, metavar='N',
                     help='number of episodes with noise (default: 100)')
 parser.add_argument('--seed', type=int, default=100, metavar='N',
                     help='random seed (default: 123)')
-parser.add_argument('--num_steps', type=int, default=1000, metavar='N',
+parser.add_argument('--num_steps', type=int, default=100, metavar='N', #default=1000
                     help='max episode length (default: 1000)')
-parser.add_argument('--num_episodes', type=int, default=20000, metavar='N',
+parser.add_argument('--num_episodes', type=int, default=200, metavar='N', #default=20000
                     help='number of episodes (default: 20000)')
-parser.add_argument('--test_episodes', type=int, default=20000, metavar='N',
+parser.add_argument('--test_episodes', type=int, default=200, metavar='N', #default=20000
                     help='number of testing episodes (default: 20000)')
 parser.add_argument('--hidden_size', type=int, default=16, metavar='N',
                     help='number of episodes (default: 128)')
@@ -123,7 +123,7 @@ def draw(data, name):
     #plt.show()
     plt.savefig(dict + '/figure/' + name + '.png')
     plt.close()
-    print "draw the figure done!"
+    print("draw the figure done!")
     return
 
 def drawMultiple(datalist, names, title):

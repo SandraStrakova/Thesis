@@ -87,6 +87,7 @@ class REINFORCE:
         normalize the given state
         :param state: np.array(['Notification_left', 'Time_from_lastRun', 'Time_from_lastNotifi',
                 'weekday', 'hour', 'Temperatuur', ''WeerType', 'WindType', 'LuchtvochtigheidType']
+                
         :return: new_state: np.array(['Notification_left' (maximum-normalization), 'Time_from_lastRun'(maximum-normalization), 'Time_from_lastNotifi'(maximum-normalization),
         #                 'hour'(maximum-normalization), 'Temperatuur'(maximum-normalization),'weekday'(one-hot-encoding),
         #                 'WeerType'(one-hot-encoding), 'WindType'(one-hot-encoding), 'LuchtvochtigheidType'(one-hot-encoding)])

@@ -40,7 +40,7 @@ class Human(object):
         prob, weather_prob = self.computeProb(action, state, index)
 
         if prob > 1.0:
-            print "The probability of running is too high."
+            print("The probability of running is too high.")
             return True, 1.0, weather_prob
         else:
             return np.random.choice([True, False], 1, p=[prob, 1 - prob]), prob, weather_prob
@@ -107,7 +107,7 @@ class Human(object):
         name = str(tuple(state[3:])).replace('.0', '')
         index = np.array([False, True, True, False, False, False])
         data = state[index]
-
+        '''
         f_weekday = inpath + "mylaps/weekday.csv"
         df = pd.read_csv(f_weekday, encoding='utf-8-sig')
 
@@ -131,6 +131,9 @@ class Human(object):
             return 1.0
 
         prob = prob_weekday * 7 * np.exp(log_prob_run - log_prob_knmi)
+
+        '''
+        prob = 1.0
 
         return prob
 

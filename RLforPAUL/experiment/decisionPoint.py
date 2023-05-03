@@ -10,6 +10,7 @@ class decisionPoint(object):
         Args:
             x (int): the index of x-axis = date in a week, from 0 to 6.
             y (int): the index of y-axis, [0, 15].
+
             index (int): the index of this decision point in all calendars.
             context (np.array): An array of context info ['Weekday', 'Hour', 'Temperatuur', 'WeerType', 'WindType', 'LuchtvochtigheidType']
                 weekday (int): day in a week = self.x + 1, from Sunday to Saturday.
@@ -26,6 +27,8 @@ class decisionPoint(object):
         self.x = x
         self.y = y
         self.index = episode * init.max_decsionPerWeek + init.max_decsionPerDay * x + y
+                                    # the index of this decision point in all calendars
+                                    # init.max_decsionPerDay * x + y = 12 * x + y (x and y are in range of n_width and n_height) 
         self.context = context
         self.is_run = None
         self.is_notification = None

@@ -15,7 +15,7 @@ class Random:
         self.notification_hours_list = []
 
     def reset(self):
-        self.notification_hours = np.array(random.sample(range(8, 20), init.max_notification / init.dayOfWeek))
+        self.notification_hours = np.array(random.sample(range(8, 20), int(init.max_notification / init.dayOfWeek)))
 
     def saveUpdate(self):
         """save the current notification_index into a list"""
