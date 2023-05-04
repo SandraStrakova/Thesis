@@ -54,7 +54,7 @@ def run_learn(agent, name, env, i_run, baseline, num_episode):
 
             # once this episode finished
             if done:
-                print("Episode: {}, reward: {}".format(i_episode, np.sum(rewards)))
+                print("Episode: {}, action: {}, reward: {}".format(i_episode,action, np.sum(rewards)))
 
                 # same the sum reward of each episode for plot
                 episode_rewards.append(np.sum(rewards))

@@ -10,6 +10,7 @@ import fixed_day as fixed_day
 #import random_week as random_week
 #import random_day as random_day
 import environment as environment_withNight
+import COPDenvironment as environment 
 import __init__ as init
 import run_save
 import saveInfo
@@ -42,7 +43,9 @@ def oneEnvironment(i_run):
    
     
     """" set up the training environment """
-    env = environment_withNight.HumanEnv(init.args.num_episodes, df) #init refers to the __init__.py file
+    #env = environment_withNight.HumanEnv(init.args.num_episodes, df) #init refers to the __init__.py file
+    env = environment.HumanEnv(init.args.num_episodes, df) #init refers to the __init__.py file
+
     
     # random seed
     env.seed(init.args.seed)

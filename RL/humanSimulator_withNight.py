@@ -22,6 +22,7 @@ class Human(object):
         self.memory = init.memory_scale ** random.randrange(init.hour_to_forget)  # random initialize
         self.urge = 1   # start from 1
         self.prob = init.prob_run
+        self.preference = 0.5
 
     def getMemory(self):
         return self.memory
@@ -54,7 +55,7 @@ class Human(object):
 
             # e.g. they might prefer certain notifications at certain hour and this can also depend on 'time_from_lastRun' (i.e. from last PA) and weather (plus added symptoms)
 
-        # and actions (for now just 0 or 1)
+        
 
         """Compute the probablity of run. P(Rt| At-1, Rt-1, Mt-1, Nt, Ct)
 
@@ -84,18 +85,21 @@ class Human(object):
                 self.urge = 1.0
 
         # get current memory value based on action and last_memory
-        if action == 1:
+        if action != 0:
             self.memory = 1.0
         else:
             self.memory = self.memory * init.memory_scale
 
-        weather_prob = self.getProb(state[3:9])
-        total_prob = self.memory * self.urge * weather_prob * self.prob
-        #print('total_prob: ', total_prob, weather_prob)
+        if action == 3:
+            self.preference = 0.8
+
+        weather_prob = self.getProb(state[3:9], action)
+        total_prob = self.memory * self.urge * weather_prob * self.prob * self.preference
+        
         return total_prob, weather_prob
 
 
-    def getProb(self, state):
+    def getProb(self, state, action):
         """Compute the probability P(Ct | Rt = 1) / P(Ct) from data.
 
             data saved in "/Users/Shihan/Desktop/Experiments/PAUL/rl/mylaps/weekday.csv"
@@ -118,6 +122,15 @@ class Human(object):
         name = str(tuple(state[3:])).replace('.0', '')
         index = np.array([False, True, True, False, False, False])
         data = state[index]
+
+        if weekday < 4 and state[2] < 15:
+            if action == 2 or action == 3:
+                prob = 0.9
+            else:
+                prob= 0.7
+        else:
+            prob = 0.5
+
         '''
         f_weekday = inpath + "mylaps/weekday.csv"
         df = pd.read_csv(f_weekday, encoding='utf-8-sig')
@@ -144,7 +157,7 @@ class Human(object):
         prob = prob_weekday * 7 * np.exp(log_prob_run - log_prob_knmi)
 
         '''
-        prob = 0.7
+        
 
         return prob
 

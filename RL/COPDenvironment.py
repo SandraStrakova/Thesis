@@ -26,20 +26,35 @@ class HumanEnv(gym.Env):
         4   Hour                            1          24 -> continous
        
         
-        5   Goal Achievement                0          1 
-        6   Phase                           0          3 -> one hot encoding
-        7   Self-efficacy                   0          1  
+        5   Goal Achievement                0          1 -> one hot encoding
+        6   Phase                           0          2 -> one hot encoding
+        7   Self-efficacy                   0          1  -> one hot encoding
         
         # do not implement yet:
-        8   Weather                         0          1 
+        8   Weather                         0          1 -> one hot encoding
+
+        Original context:
+        Observation/state:
+        Type: Box(10)
+        Num	Observation                     Min        Max
+        0	The notification left           0          __init__.max_notification => normalized into (0-1)
+        1	Decision points from last run   0          __init__.max_decsionPerWeek - 1 => normalized into (0-1)
+        2   Decision points from last notification 0   __init__.max_decsionPerWeek - 1 => normalized into (0-1)
+        3   Date in a week                  0          6 -> one hot encoding
+        4   Index in a day                  1          24 -> continous
+        5   Temperature                     -10        36 -> continous
+        6   Weather type                    1          8
+        7   Wind type                       1          4
+        8   Humidity type                   1          3 => normalized into (0-1)
 
     Actions:
         Type: Discrete(3)
 
-        Num	Action label                   Action explanation                           
-        0    Mi                             Motivation initiation
-        1    Mis                            Motivation initiation self-efficacy
-        2    Fg                             Feedback goal achievement
+        Num	Action label                   Action explanation   
+        0    No                             No notification                    
+        1    Mi                             Motivation initiation
+        2    Mis                            Motivation initiation self-efficacy
+        3    Fg                             Feedback goal achievement
         
 
         # not yet implemented: (start with initiation phase only)
@@ -51,7 +66,7 @@ class HumanEnv(gym.Env):
         
 
     Reward:
-        Every step, actions have three options - FOR NOW WE DISREGARD NOTIFICATION AVAILABILITY
+        Every step, if notification is still available, actions have two options; otherwise, always action 0 will be taken
         Every step, if a PA is performed, reward is 1.
 
     Episode Termination:
@@ -108,30 +123,28 @@ class HumanEnv(gym.Env):
         # self.goal_threshold = 3   # the total goal (frequency of run) in one episode
 
         # 0,1 represent send, not send.
-        self.action_space = spaces.Discrete(2)
+        self.action_space = spaces.Discrete(4)
 
         # observation = ['Notification_left', 'Time_from_lastRun', 'Time_from_lastNotifi',
-        ## 'weekday', 'hour', 'Temperatuur', ''WeerType', 'WindType', 'LuchtvochtigheidType'].
+                #       'weekday', 'hour', 'Goal', 'Phase', 'efficacy'].
         low = np.array([
             0,
             0,
             0,
             0,
             1,
-            -10,
-            1,
-            1,
-            1])
+            0,
+            0,
+            0])
         high = np.array([
             init.max_notification,
             init.max_decsionPerWeek - 1,
             init.max_decsionPerWeek - 1,
             6,
             24,
-            36,
-            8,
-            5,
-            3])
+            1,
+            2,
+            1])
         self.observation_space = spaces.Box(low, high, dtype=np.uint8)
 
     def getRandom_index(self):
@@ -248,8 +261,8 @@ class HumanEnv(gym.Env):
 
         """update the probability of send notification based on the current policy"""
 
-        # if send notification
-        if action == 1:
+        # if a notification was sent
+        if action != 0:
             # update the notification info in corresponding decision point object
             self.calendars[self.current_episode].getGrid(index).setNotification(True)
 

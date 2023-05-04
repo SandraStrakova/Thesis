@@ -58,6 +58,7 @@ class REINFORCE:
     def select_action(self, raw_state):
 
         # once there is no notification left
+        '''
         if raw_state[0] == 0:
 
             # normalize the state values
@@ -67,20 +68,25 @@ class REINFORCE:
             return torch.tensor([0], dtype=torch.int32), torch.tensor([[0.0]], dtype=torch.float), self.model(Variable(state))[0][1]
 
         else:
+        '''
             # normalize the state values
-            state = torch.Tensor([self.normalizeState(raw_state)])
+        state = torch.Tensor([self.normalizeState(raw_state)])
+                #user warning: making a tensor from multiple numpy arrays is very slow, consider converting it to a single array first
 
             # neural network calculates the probability of all actions based on this state
-            probs = self.model(Variable(state))#.cuda())
+        probs = self.model(Variable(state))#.cuda())
+            
             # randomly select from 0 & 1 based on probability given in probs
-            action = probs.multinomial(1).data
+        action = probs.multinomial(1).data
+            
             # get the probability of selected action
-            prob = probs[:, action[0, 0].type(torch.int64)].view(1, -1)
-
+        prob = probs[:, action[0, 0].type(torch.int64)].view(1, -1)
+            
             # calculate the log(prob) for the selected action at each state
-            log_prob = prob.log()
+        log_prob = prob.log()
 
-            return action[0], log_prob, probs[0][1]
+
+        return action[0], log_prob, probs[0][1]
 
     def normalizeState(self, state):
         """
