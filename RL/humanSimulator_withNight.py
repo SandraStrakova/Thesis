@@ -43,8 +43,13 @@ class Human(object):
         if prob > 1.0:
             print("The probability of running is too high.")
             return True, 1.0, weather_prob
+        elif prob > 0.6:
+            print('run', action)
+            return True, prob, weather_prob
         else:
-            return np.random.choice([True, False], 1, p=[prob, 1 - prob]), prob, weather_prob
+            print('no run', action)
+            return False, prob, weather_prob
+            #return np.random.choice([True, False], 1, p=[prob, 1 - prob]), prob, weather_prob
 
 
     def computeProb(self, action, state, index):
@@ -70,13 +75,16 @@ class Human(object):
         """
 
         # get current urge value based on last_run and last_urge
-        if state[1] == 1:  # if time_from_lastRun == 1
-            self.urge = 0.001
-        else:
-            self.urge = self.urge + init.urge_scale
-            if self.urge > 1:
-                self.urge = 1.0
+        if state[5] == 0 and (action == 0 or action == 1):  # if user is inactive (assumption of maintenance stage)
+            self.urge = 0.5
+        
+        elif (state[5] == 0 or state[5] == 1) and action == 2: # if user is (in)active and receives M3
+            self.urge = 0.8
 
+        elif state[5] == 1 and (action == 0 or action == 1): # if user is active and receives M1 or M2
+            self.urge = 0.2
+
+        '''
         # when it is the first hour in a day, update memory and urge
         if index % init.max_decsionPerDay == 0:
             self.memory = self.memory * (init.memory_scale ** 12)
@@ -92,9 +100,11 @@ class Human(object):
 
         if action == 3:
             self.preference = 0.8
-
+        
+        '''
         weather_prob = self.getProb(state[3:9], action)
-        total_prob = self.memory * self.urge * weather_prob * self.prob * self.preference
+        #total_prob = self.memory * self.urge * weather_prob * self.prob * self.preference
+        total_prob = self.urge
         
         return total_prob, weather_prob
 

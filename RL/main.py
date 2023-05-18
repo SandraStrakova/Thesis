@@ -9,8 +9,7 @@ import RESTRICT_win_baseline as RESTRICT_win_baseline
 import fixed_day as fixed_day
 #import random_week as random_week
 #import random_day as random_day
-import environment as environment_withNight
-import COPDenvironment as environment 
+import environment 
 import __init__ as init
 import run_save
 import saveInfo
@@ -30,7 +29,8 @@ RENDER = False
 def oneEnvironment(i_run):
 
     """read Context info from documents and put them in df"""
-    input = os.path.expanduser(init.dict + "knmi_weekday_old.csv")
+    #input = os.path.expanduser(init.dict + "knmi_weekday_old.csv")
+    input = os.path.expanduser(init.dict + "state.csv")   #temperature replaced by state (the file structure was kept the same for ease of reading but the other variables won't be used)
     df = pd.read_csv(input, encoding='utf-8-sig', sep=';').dropna()
     df['bewolking'].replace('     ', np.nan, inplace=True)
     df['Regen'].replace('     ', np.nan, inplace=True)
@@ -104,7 +104,7 @@ def oneEnvironment(i_run):
     saveInfo.saveTofile(extra_wrong_n_rb_train + extra_wrong_n_rb_test, "reinforce_train_extra_wrong", i_run)
     '''
     # REINFORCE_restrict algorithm: send notification with maximal init.max_notification
-    agent_restrict_win = RESTRICT_win_baseline.REINFORCE(init.args.hidden_size, 27, env.action_space, baseline)
+    agent_restrict_win = RESTRICT_win_baseline.REINFORCE(init.args.hidden_size, 1, env.action_space, baseline) #27
     raw_rewards_rw_train, notification_left_rw_train, wrong_n_rw_train, extra_wrong_n_rw_train, agent_restrict_learned = run_save.run_learn(agent_restrict_win, 'restrict_win',env, i_run, baseline, init.args.num_episodes)
     saveInfo.saveTofile(raw_rewards_rw_train, "restrict_win_train", i_run)
     saveInfo.saveTofile(notification_left_rw_train, "restrict_win_notification", i_run)

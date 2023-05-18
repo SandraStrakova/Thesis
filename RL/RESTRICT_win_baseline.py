@@ -70,7 +70,7 @@ class REINFORCE:
         else:
         '''
             # normalize the state values
-        state = torch.Tensor([self.normalizeState(raw_state)])
+        state = torch.Tensor([self.normalizeState(raw_state)]) #only returns the 'state' variable now (0 or 1)
                 #user warning: making a tensor from multiple numpy arrays is very slow, consider converting it to a single array first
 
             # neural network calculates the probability of all actions based on this state
@@ -101,6 +101,8 @@ class REINFORCE:
                             changed into weekday, bewolking, weercode, regen for the one-hot-encoding
         """
         # first, perform maximum normalization for continuous variables
+
+        '''
         new_state = np.array([init.mm_normalized(state[0], 0, init.max_notification), init.mm_normalized(state[1], 0, init.max_decsionPerWeek - 1),
                           init.mm_normalized(state[2], 0, init.max_decsionPerWeek - 1),
                           init.mm_normalized(state[4], 0, 24), init.mm_normalized(state[5], -10, 36)])
@@ -108,6 +110,8 @@ class REINFORCE:
         # next, perform one-hot encoding for categorical variables (weekday, WeerType, WindType, LuchtvochtigheidType)
         
         new_state = np.append(new_state, init.onehot_normalized_all(state[[3, 6, 7, 8]]))  
+        '''
+        new_state = np.array([int(state[5])])
 
         return new_state
 
