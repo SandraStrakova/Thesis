@@ -41,6 +41,34 @@ class HumanEnv(gym.Env):
     Solved Requirements:
         Considered solved when the goal achieved continuously for the last 10 episode.
 
+    __________________________________________________________
+    user state variables to consider
+     
+        5   Goal Achievement                0          1 -> one hot encoding
+        6   Phase                           0          2 -> one hot encoding
+        7   Self-efficacy                   0          1  -> one hot encoding
+        
+        # do not implement yet:
+        8   Weather                         0          1 -> one hot encoding
+
+
+    possible actions
+        Type: Discrete(n)
+
+        Num	Action label                   Action explanation   
+        0    No                             No notification                    
+        1    Mi                             Motivation initiation
+        2    Mis                            Motivation initiation self-efficacy
+        3    Fg                             Feedback goal achievement
+        
+
+        # not yet implemented: (start with initiation phase only)
+        2    Ma                             Motivation action
+        3    Mas                            Motivation action self-efficacy
+        4    Mm                             Motivation maintenance
+        5    Mms                            Motivation maintenance self-efficacy
+        
+
 
     ______________ First model parameters ______________
         states:
@@ -112,10 +140,10 @@ class HumanEnv(gym.Env):
         # self.goal_threshold = 3   # the total goal (frequency of run) in one episode
 
         # 0,1 represent send, not send.
-        self.action_space = spaces.Discrete(3) #gym class: {0,1,2}
+        self.action_space = spaces.Discrete(5) #{7,10,16,27,29}  #gym class: {0,1,2}
 
         # observation = ['Notification_left', 'Time_from_lastRun', 'Time_from_lastNotifi',
-        ## 'weekday', 'hour', 'Temperatuur', ''WeerType', 'WindType', 'LuchtvochtigheidType'].
+        ## 'weekday', 'hour', 'state', 'BS', 'SE', 'Regen'].
         low = np.array([
             0,
             0,
@@ -124,18 +152,18 @@ class HumanEnv(gym.Env):
             1,
             0,
             1,
-            1,
-            1])
+            0,
+            0])
         high = np.array([
             init.max_notification,
             init.max_decsionPerWeek - 1,
             init.max_decsionPerWeek - 1,
             6,
             24,
-            1,
-            8,
-            5,
-            3])
+            1, #temperature replaced by state
+            3, #BS
+            1, #SE
+            1]) #Regen
         self.observation_space = spaces.Box(low, high, dtype=np.uint8)
 
     def getRandom_index(self):
@@ -253,7 +281,7 @@ class HumanEnv(gym.Env):
         """update the probability of send notification based on the current policy"""
 
         # if send notification
-                # now we always send notification 
+                # for now we always send notification 
         #if action == 1:
             # update the notification info in corresponding decision point object
         self.calendars[self.current_episode].getGrid(index).setNotification(True)

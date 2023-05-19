@@ -93,25 +93,30 @@ class REINFORCE:
         normalize the given state
         :param state: np.array(['Notification_left', 'Time_from_lastRun', 'Time_from_lastNotifi',
                 'weekday', 'hour', 'Temperatuur', ''WeerType', 'WindType', 'LuchtvochtigheidType']
+              
+                  # np.array(['Notification_left', 'Time_from_lastRun', 'Time_from_lastNotifi',
+                'weekday', 'hour', 'state', 'bs', 'se', 'regen'] 
 
-        :return: new_state: np.array(['Notification_left' (maximum-normalization), 'Time_from_lastRun'(maximum-normalization), 'Time_from_lastNotifi'(maximum-normalization),
-        #                 'hour'(maximum-normalization), 'Temperatuur'(maximum-normalization),'weekday'(one-hot-encoding),
-        #                 'WeerType'(one-hot-encoding), 'WindType'(one-hot-encoding), 'LuchtvochtigheidType'(one-hot-encoding)])
+        :return: new_state: np.array(['Notification_left' (maximum-normalization), 'Time_from_lastRun'(maximum-normalization),
+                                     'Time_from_lastNotifi'(maximum-normalization),'hour'(maximum-normalization),'weekday'(one-hot-encoding),
+                                       'state'(one-hot-encoding),'bs'(one-hot-encoding), 
+                                       'se'(one-hot-encoding), 'regen'(one-hot-encoding)])
 
                             changed into weekday, bewolking, weercode, regen for the one-hot-encoding
         """
         # first, perform maximum normalization for continuous variables
 
-        '''
-        new_state = np.array([init.mm_normalized(state[0], 0, init.max_notification), init.mm_normalized(state[1], 0, init.max_decsionPerWeek - 1),
+        
+        new_state = np.array([init.mm_normalized(state[0], 0, init.max_notification), 
+                              init.mm_normalized(state[1], 0, init.max_decsionPerWeek - 1),
                           init.mm_normalized(state[2], 0, init.max_decsionPerWeek - 1),
-                          init.mm_normalized(state[4], 0, 24), init.mm_normalized(state[5], -10, 36)])
+                          init.mm_normalized(state[4], 0, 24)])
         
-        # next, perform one-hot encoding for categorical variables (weekday, WeerType, WindType, LuchtvochtigheidType)
+        # next, perform one-hot encoding for categorical variables (weekday, state, BS, SE, regen)
         
-        new_state = np.append(new_state, init.onehot_normalized_all(state[[3, 6, 7, 8]]))  
-        '''
-        new_state = np.array([int(state[5])])
+        new_state = np.append(new_state, init.onehot_normalized_all(state[[3, 5, 6, 7, 8]]))  
+        
+        #new_state = np.array([int(state[5])])
 
         return new_state
 
