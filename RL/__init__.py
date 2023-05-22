@@ -55,9 +55,9 @@ parser.add_argument('--seed', type=int, default=100, metavar='N',
                     help='random seed (default: 123)')
 parser.add_argument('--num_steps', type=int, default=100, metavar='N', #default=1000
                     help='max episode length (default: 1000)')
-parser.add_argument('--num_episodes', type=int, default=200, metavar='N', #default=20000
+parser.add_argument('--num_episodes', type=int, default=1000, metavar='N', #default=20000
                     help='number of episodes (default: 20000)')
-parser.add_argument('--test_episodes', type=int, default=200, metavar='N', #default=20000
+parser.add_argument('--test_episodes', type=int, default=1000, metavar='N', #default=20000
                     help='number of testing episodes (default: 20000)')
 parser.add_argument('--hidden_size', type=int, default=16, metavar='N',
                     help='number of episodes (default: 128)')
@@ -83,9 +83,10 @@ def mm_normalized(x, min, max):
 def onehot_normalized_all(data):
     # data = np.array([5,4,3,1])
     return np.concatenate((getOneHotEncoder('weekday').transform(data[0].reshape(1,-1)).toarray(),
-                    getOneHotEncoder('weather').transform(data[1].reshape(1, -1)).toarray(),
-                    getOneHotEncoder('wind').transform(data[2].reshape(1, -1)).toarray(),
-                    getOneHotEncoder('humidity').transform(data[3].reshape(1, -1)).toarray()), axis=None)
+                    getOneHotEncoder('state').transform(data[1].reshape(1, -1)).toarray(),
+                    getOneHotEncoder('bs').transform(data[2].reshape(1, -1)).toarray(),
+                    getOneHotEncoder('se').transform(data[3].reshape(1, -1)).toarray(), 
+                     getOneHotEncoder('regen').transform(data[4].reshape(1, -1)).toarray()), axis=None)
 
 def onehot_normalized(data, name):
     return getOneHotEncoder(name).transform(data).reshape(1,-1).toarray()
@@ -94,33 +95,37 @@ def onehot_normalized(data, name):
 def getOneHotEncoder(arg):
     """" get the one-hot encoder """
 
-    #weekday = [[1], [2], [3], [4], [5], [6], [7]]
-    #weather = [[1], [2], [3], [4], [5], [6], [7], [8]]
-    #wind = [[1], [2], [3], [4], [5]]
-    #humidity = [[1], [2], [3]]
+    
 
     # changed the data into weekday, hour, temperature, bewolking, weercode, regen (though the names are the same)
 
     weekday = [[1], [2], [3], [4], [5], [6], [7]]
-    weather = [[0], [1], [2], [3], [4], [5], [6], [7], [8], [9]]
-    wind = [[5], [6], [7]]
-    humidity = [[0], [1]]
+    state = [[0], [1]]
+    bs = [[1], [2], [3]]
+    se = [[0], [1]]
+    regen = [[0], [1]]
+    #weather = [[0], [1], [2], [3], [4], [5], [6], [7], [8], [9]]
+    #wind = [[5], [6], [7]]
+    #humidity = [[0], [1]]
 
 
     enc_weekday = preprocessing.OneHotEncoder()
     enc_weekday.fit(weekday)
-    enc_weather = preprocessing.OneHotEncoder()
-    enc_weather.fit(weather)
-    enc_wind = preprocessing.OneHotEncoder()
-    enc_wind.fit(wind)
-    enc_humidity = preprocessing.OneHotEncoder()
-    enc_humidity.fit(humidity)
+    enc_state = preprocessing.OneHotEncoder()
+    enc_state.fit(state)
+    enc_bs = preprocessing.OneHotEncoder()
+    enc_bs.fit(bs)
+    enc_se = preprocessing.OneHotEncoder()
+    enc_se.fit(se)
+    enc_regen = preprocessing.OneHotEncoder()
+    enc_regen.fit(regen)
 
     encoder = {
         'weekday': enc_weekday,
-        'weather': enc_weather,
-        'wind': enc_wind,
-        'humidity': enc_humidity
+        'state': enc_state,
+        'bs': enc_bs,
+        'se': enc_se,
+        'regen': enc_regen
     }
     return encoder.get(arg, "Invalid feature type")
 

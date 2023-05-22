@@ -40,6 +40,58 @@ class HumanEnv(gym.Env):
         Episode length is greater than MaxDecsionPerDay * 7 days
     Solved Requirements:
         Considered solved when the goal achieved continuously for the last 10 episode.
+
+    __________________________________________________________
+    user state variables to consider
+     
+        5   Goal Achievement                0          1 -> one hot encoding
+        6   Phase                           0          2 -> one hot encoding
+        7   Self-efficacy                   0          1  -> one hot encoding
+        
+        # do not implement yet:
+        8   Weather                         0          1 -> one hot encoding
+
+
+    possible actions
+        Type: Discrete(n)
+
+        Num	Action label                   Action explanation   
+        0    No                             No notification                    
+        1    Mi                             Motivation initiation
+        2    Mis                            Motivation initiation self-efficacy
+        3    Fg                             Feedback goal achievement
+        
+
+        # not yet implemented: (start with initiation phase only)
+        2    Ma                             Motivation action
+        3    Mas                            Motivation action self-efficacy
+        4    Mm                             Motivation maintenance
+        5    Mms                            Motivation maintenance self-efficacy
+        
+
+
+    ______________ First model parameters ______________
+        states:
+            0     Active
+            1    Inactive
+        
+        actions:
+            type: Discrete()
+            0    M1     initiation
+            1    M2     action
+            2    M3     maintenance
+
+        probability of PA:
+            take action at every step
+            if state = 0 and action M1 or action M2:
+                PA probability = 0.1
+            elif state = 0 and action M3:
+                PA probability = 1.0
+            
+        reward:
+            1 if PA is performed  
+            
+
     """
 
     metadata = {
@@ -88,30 +140,30 @@ class HumanEnv(gym.Env):
         # self.goal_threshold = 3   # the total goal (frequency of run) in one episode
 
         # 0,1 represent send, not send.
-        self.action_space = spaces.Discrete(2)
+        self.action_space = spaces.Discrete(5) #{7,10,16,27,29}  #gym class: {0,1,2}
 
         # observation = ['Notification_left', 'Time_from_lastRun', 'Time_from_lastNotifi',
-        ## 'weekday', 'hour', 'Temperatuur', ''WeerType', 'WindType', 'LuchtvochtigheidType'].
+        ## 'weekday', 'hour', 'state', 'BS', 'SE', 'Regen'].
         low = np.array([
             0,
             0,
             0,
             0,
             1,
-            -10,
+            0,
             1,
-            1,
-            1])
+            0,
+            0])
         high = np.array([
             init.max_notification,
             init.max_decsionPerWeek - 1,
             init.max_decsionPerWeek - 1,
             6,
             24,
-            36,
-            8,
-            5,
-            3])
+            1, #temperature replaced by state
+            3, #BS
+            1, #SE
+            1]) #Regen
         self.observation_space = spaces.Box(low, high, dtype=np.uint8)
 
     def getRandom_index(self):
@@ -229,24 +281,29 @@ class HumanEnv(gym.Env):
         """update the probability of send notification based on the current policy"""
 
         # if send notification
-        if action == 1:
+                # for now we always send notification 
+        #if action == 1:
             # update the notification info in corresponding decision point object
-            self.calendars[self.current_episode].getGrid(index).setNotification(True)
+        self.calendars[self.current_episode].getGrid(index).setNotification(True)
 
             # update the notification_left in corresponding calendar object
-            self.calendars[self.current_episode].setNotificationLeft(self.calendars[self.current_episode].getNotificationLeft() - 1)
+        self.calendars[self.current_episode].setNotificationLeft(self.calendars[self.current_episode].getNotificationLeft() - 1)
 
             # update the last_run_index in this environment object
-            self.last_notification_index = index
+        self.last_notification_index = index
+        
+        '''
         else:
             # update the notification info in corresponding decision point object
             self.calendars[self.current_episode].getGrid(index).setNotification(False)
+        '''
 
         """given action and current_state, the user decide to run or not"""
         run, prob, weather_prob = self.human.isRun(action, current_state, index)
         # update the run_prob and weather_prob info in corresponding decision point object
         self.calendars[self.current_episode].getGrid(index).setProb(prob)
-        self.calendars[self.current_episode].getGrid(index).setWeatherProb(weather_prob)
+        
+        #self.calendars[self.current_episode].getGrid(index).setWeatherProb(weather_prob)
 
         if run:   # if run:
             reward = init.reward
