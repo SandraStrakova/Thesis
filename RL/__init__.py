@@ -4,19 +4,20 @@ import matplotlib.pyplot as plt
 import argparse
 from sklearn import preprocessing
 import numpy as np
+import os
 plt.switch_backend('agg')
 
-dict = "~\Documents\GitHub\Thesis\RL\\"
+dict = str(os.getcwd()) + '\\RL\\'
 
 """
 Parameters in psychological model
 """
 hour_to_forget = 20
-#memory_scale = round(math.pow(0.001, (1.0 /hour_to_forget)), 2)
+memory_scale = round(math.pow(0.001, (1.0 /hour_to_forget)), 2) #0.71
 memory_scale = 0.8
 
 hour_to_urge = 20
-urge_scale = round(1.0 / hour_to_urge, 2)
+urge_scale = round(1.0 / hour_to_urge, 2) # 0.05
 prob_run = 0.1
 
 """
@@ -38,7 +39,7 @@ max_decsionPerDay = 12
 reward = 1.0
 
 max_notification = notification_per_day * dayOfWeek
-max_decsionPerWeek = max_decsionPerDay * dayOfWeek
+max_decsionPerWeek = max_decsionPerDay * dayOfWeek 
 loop_num = 7 / dayOfWeek
 
 fixed_hour = [11, 17]
@@ -47,17 +48,17 @@ fixed_hour = [11, 17]
 Parameters in algorithm
 """
 parser = argparse.ArgumentParser(description='PyTorch REINFORCE')
-parser.add_argument('--gamma', type=float, default=1, metavar='G',
+parser.add_argument('--gamma', type=float, default=0.8, metavar='G', #1
                     help='discount factor for reward (default: 2)')
 parser.add_argument('--exploration_end', type=int, default=100, metavar='N',
                     help='number of episodes with noise (default: 100)')
-parser.add_argument('--seed', type=int, default=100, metavar='N',
+parser.add_argument('--seed', type=int, default=100, metavar='N', 
                     help='random seed (default: 123)')
-parser.add_argument('--num_steps', type=int, default=100, metavar='N', #default=1000
+parser.add_argument('--num_steps', type=int, default=100, metavar='N', #default=1000 #changing it here doesn't matter, the episode length is determined by is_End function in environment.py
                     help='max episode length (default: 1000)')
-parser.add_argument('--num_episodes', type=int, default=1000, metavar='N', #default=20000
+parser.add_argument('--num_episodes', type=int, default=2000, metavar='N', #default=20000
                     help='number of episodes (default: 20000)')
-parser.add_argument('--test_episodes', type=int, default=1000, metavar='N', #default=20000
+parser.add_argument('--test_episodes', type=int, default=100, metavar='N', #default=20000
                     help='number of testing episodes (default: 20000)')
 parser.add_argument('--hidden_size', type=int, default=16, metavar='N',
                     help='number of episodes (default: 128)')
