@@ -37,7 +37,7 @@ def run_learn(agent, name, env, i_run, baseline, num_episode):
         """" training: loop the steps in each episode """
         for t in range(init.args.num_steps):
             action, log_prob, current_prob = agent.select_action(state)
-            ## action = action.cpu()
+            action = action.cpu()
 
             # env.step(self, action): Step the environment using the chosen action by one timestep.
             # Return observation (np.array), reward (float), done (boolean), info (dict) """
@@ -49,8 +49,8 @@ def run_learn(agent, name, env, i_run, baseline, num_episode):
             rewards.append(reward)
 
             # append rewards only before notification was sent out
-            if info['notification'] > 0 or action.numpy()[0] == 1:
-                rewards_notifi.append(reward)
+            #if info['notification'] > 0 or action.numpy()[0] == 1:
+                #rewards_notifi.append(reward)
 
             # once this episode finished
             if done:
@@ -76,7 +76,8 @@ def run_learn(agent, name, env, i_run, baseline, num_episode):
                 break
 
         # update the policy at the end of episode
-        agent.finish_episode(rewards, init.args.gamma, log_probs, 3.5, [], i_episode)
+        agent.finish_episode(rewards, init.args.gamma, log_probs, baseline, [], i_episode) # instead of baseline, there was 3.5 
+                                                                                        #(but baseline is not used here, using avg returns instead)
         saveInfo.savePolicy(agent, name, i_run, i_episode)
 
     print ("One learning run done!")
@@ -176,7 +177,7 @@ def run_test(agent, name, env, i_run):
 
     """" training: loop the episodes """
     # for each episode, update the parameter
-    for i_episode in range(init.args.test_episodes - init.args.left_episodes, init.args.test_episodes):
+    for i_episode in range(init.args.test_episodes): #- init.args.left_episodes
 
         # env.reset(): Reset the environment as the current episode. Return the first observation
         state = env.resetCalendar(i_episode)
@@ -189,13 +190,15 @@ def run_test(agent, name, env, i_run):
         """" training: loop the steps in each episode """
         for t in range(init.args.num_steps):
             
+            '''
             # if no notification left, always do not send notification
             if state[0] == 0:
                 action = torch.tensor([0], dtype=torch.int32)
             else:
-                action, log_prob, current_prob = agent.select_action(state)
-                ## action = action.cpu()
-
+            '''
+            action, log_prob, current_prob = agent.select_action(state)
+            action = action.cpu()
+          
             # env.step(self, action): Step the environment using the chosen action by one timestep.
             # Return observation (np.array), reward (float), done (boolean), info (dict) """
             state, reward, done, info = env.step(action.numpy()[0])
@@ -204,8 +207,8 @@ def run_test(agent, name, env, i_run):
             rewards.append(reward)
 
             # append rewards only before notification was sent out
-            if info['notification'] > 0 or action.numpy()[0] == 1:
-                rewards_notifi.append(reward)
+            #if info['notification'] > 0 or action.numpy()[0] == 1:
+                #rewards_notifi.append(reward)
 
             # once this episode finished
             if done:
@@ -216,9 +219,9 @@ def run_test(agent, name, env, i_run):
                 run_match_notification_reward.append(getReward(info['calendars'], i_episode))
                 notification_left.append(getNotificationLeft(info['calendars'], i_episode))
 
-                wrong, extra_wrong = getWrongNotification(info['calendars'], i_episode)
-                wrong_notification.append(wrong)
-                extra_wrong_notification.append(extra_wrong)
+                #wrong, extra_wrong = getWrongNotification(info['calendars'], i_episode)
+                #wrong_notification.append(wrong)
+                #extra_wrong_notification.append(extra_wrong)
 
                 """save detailed information of the current week into files"""
                 #saveInfo.saveInternal(info['calendars'][i_episode], i_run, i_episode, name)

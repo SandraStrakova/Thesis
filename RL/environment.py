@@ -42,54 +42,16 @@ class HumanEnv(gym.Env):
         Considered solved when the goal achieved continuously for the last 10 episode.
 
     __________________________________________________________
-    user state variables to consider
-     
-        5   Goal Achievement                0          1 -> one hot encoding
-        6   Phase                           0          2 -> one hot encoding
-        7   Self-efficacy                   0          1  -> one hot encoding
-        
-        # do not implement yet:
-        8   Weather                         0          1 -> one hot encoding
+    
+    user states:
+        [BS, SE] BS: 1/2/3, SE: 0/1
 
-
-    possible actions
-        Type: Discrete(n)
-
-        Num	Action label                   Action explanation   
-        0    No                             No notification                    
-        1    Mi                             Motivation initiation
-        2    Mis                            Motivation initiation self-efficacy
-        3    Fg                             Feedback goal achievement
-        
-
-        # not yet implemented: (start with initiation phase only)
-        2    Ma                             Motivation action
-        3    Mas                            Motivation action self-efficacy
-        4    Mm                             Motivation maintenance
-        5    Mms                            Motivation maintenance self-efficacy
-        
-
-
-    ______________ First model parameters ______________
-        states:
-            0     Active
-            1    Inactive
-        
-        actions:
-            type: Discrete()
-            0    M1     initiation
-            1    M2     action
-            2    M3     maintenance
-
-        probability of PA:
-            take action at every step
-            if state = 0 and action M1 or action M2:
-                PA probability = 0.1
-            elif state = 0 and action M3:
-                PA probability = 1.0
+    actions:
+        6 messages with different combinations of BS and SE
             
         reward:
-            1 if PA is performed  
+            1 if PA is performed, i.e., user state matches message descriptor
+            0 if not
             
 
     """
@@ -117,13 +79,13 @@ class HumanEnv(gym.Env):
             steps_beyond_done (bool): whether this episode is done, True = done, False =  not done.
             action_space: spaces.Discrete(2)
             observation_space: spaces.Box(9)
-            human (object dataGenerator.Human): The human simulator can decide whether run or not.
+            human (object dataGenerator.Human): The human simulator can decide whether to run or not.
             init_memory (float): the initial memory randomly generated, which needed to be saved for re-run the experiment
 
         Return: initial observation state (np.array)
         """
 
-        self.random_index = randrange(1700) #* init.max_decsionPerDay
+        self.random_index = randrange(1800) * init.max_decsionPerDay # doesn't matter, (see weekCalendar.py, __init__)
         self.calendars = self.generateCalendar(num_episode, self.random_index, df)  # generate all calendars from data
 
 
@@ -140,7 +102,7 @@ class HumanEnv(gym.Env):
         # self.goal_threshold = 3   # the total goal (frequency of run) in one episode
 
         # 0,1 represent send, not send.
-        self.action_space = spaces.Discrete(5) #{7,10,16,27,29}  #gym class: {0,1,2}
+        self.action_space = spaces.Discrete(6)  #gym class: {0,1,2...}
 
         # observation = ['Notification_left', 'Time_from_lastRun', 'Time_from_lastNotifi',
         ## 'weekday', 'hour', 'state', 'BS', 'SE', 'Regen'].
@@ -191,7 +153,7 @@ class HumanEnv(gym.Env):
               # {'grids': [array of decision point objects], 'n_height': 12, 'n_width': 7, 'len': 84, 'index_in_data': 881, 'total_run': 0, 'notification_left': 14, 'reward_total': 0.0}}
               
               # one decision point object within the array:
-              #   {'x': 0, 'y': 0, 'index': 0, 'context': array([20130620, 20,  195, 10, 20, 95], dtype=int64), 'is_run': None, 'is_notification': None, 'run_prob': None, 'weather_prob': None}
+              #   {'x': 0, 'y': 0, 'index': 0, 'context': array([ 1, 13,  1,  2,  0,  0], dtype=int64), 'is_run': None, 'is_notification': None, 'run_prob': None, 'weather_prob': None}
        
        
         return calendars

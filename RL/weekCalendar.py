@@ -23,30 +23,40 @@ class weekMatrix(): #object
             index_in_data (int): a random index of starting point in real data
     """
 
-    def __init__(self, n_width,  n_height, start_index_in_data, episode, df):
+    def __init__(self, n_width,  n_height, start_index_in_data, episode, df): #n_width = 7, n_height = 12, start_index_in_data = randrange(21600), episode = n
         self.grids = []
         self.n_height = n_height
         self.n_width = n_width
         self.len = n_width * n_height
-        self.index_in_data = np.random.randint(0, 3084) #start_index_in_data + episode * init.max_decsionPerWeek 
-                                                            #start_index = random_index from randrange(1700)
+        self.index_in_data = np.random.randint(0, 35713) #(start_index_in_data + episode * init.max_decsionPerWeek)) # a maximum index of 1800 * 12 + 20000 * 84 = 1701600 according to the original settings
+                                                            #start_index = random_index from randrange(1800) * init.max_decsionPerDay
                                                             #num episodes from init = 200
                                                                 #in the generateCalendar function, we loop over the number of episodes (for i in range(num)) -> i becomes the episode
                                                                 # max_decsionPerWeek = max_decsionPerDay * dayOfWeek -> 12 * 7 = 84
-                                                                # 1700 + 200 * 84 = 1700 + 16800 = 18500
+                                                                # max possible index: start_index_in_data + max_episodes * 84 (to which 96 is still added in readContext)
+                                                                    # thus, we limit the max to 35809 - 96 (35713) in generating the start index (35809, number of rows in the data)
+                                                                   
+                                                                    # start_index_in_data = self.random_index * 12 (in environment.py, __init__)
+                                                                    # self.random_index * 12 + max_episodes * 84 = 35713 
+                                                                    # now max eps is 1000
+                                                                    # self.random_index = (35713 - 84000) / 12
+                                                                    # self.random_index = -4023
+                                                                    # 
+                                                                    # we have too little data, thus we just set the max to 35713
 
         self.total_run = 0
         self.notification_left = init.max_notification # notification_per_day * dayOfWeek = 2 * 7 = 14
         self.reward_total = 0.0
-
+       
         for x in range(self.n_width):
             for y in range(self.n_height):
-                self.grids.append(decisionPoint.decisionPoint(episode, x, y, self.readContext(self.index_in_data, init.max_decsionPerDay * x + y, df))) 
+                self.grids.append(decisionPoint.decisionPoint(episode, x, y, self.readContext(self.index_in_data, init.max_decsionPerDay * x + y, df))) # 12 * 7 + 12 = 96
 
 
     def readContext(self, start_index, index, df):
         # ['Weekday', 'Hour', 'Temperatuur', 'WeerType', 'WindType', 'LuchtvochtigheidType']
-        state = df.iloc[start_index] # + index]
+        #print(start_index, index)
+        state = df.iloc[start_index + index]
   
         return np.array(state)
 

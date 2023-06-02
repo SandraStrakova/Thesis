@@ -25,7 +25,7 @@ class Human(object):
         self.prob = init.prob_run
         self.preference = 0.5
         
-        with open('message_descriptors.json', 'r', encoding='utf-8') as file_handle:
+        with open(init.dict +'message_descriptors.json', 'r', encoding='utf-8') as file_handle:
             self.messages = json.load(file_handle)
 
 
@@ -86,12 +86,13 @@ class Human(object):
 
        
         # state: hour, state, BS, SE (0,1), regen 
-
+        time_lastPA = state[1]
         bs = state[6]
         se = state[7]
-        morning = [8,9,10,11,12]
+        
+        morning = [5,6,7, 8,9,10,11,12]
         afternoon = [13,14,15,16,17]
-        evening = [18,19,20,21,22,23]
+        evening = [18,19,20,21,22,23,24,1,2,3,4]
 
         if state[4] in morning:
             dayPart = 1
@@ -102,16 +103,24 @@ class Human(object):
         else:
             dayPart = 0 #rest
 
-        #if (mes_descr[0] == bs) and (mes_descr[1] == dayPart):
-        if se == 1 and mes_descr[2] == 3:
-                print('se = 1')
-                self.urge = 0.9
-        elif se == 0 and mes_descr[2] != 3:
-                self.urge = 0.7
-                print('se = 0')
+        user_state = [bs, se]
+
+        # get current urge value based on last_run and last_urge
+       # if (state[1] == 1 and action == 6) or 
+       # {"ID": 6,
+       # "descr": [4,4]}
+        
+        
+        if (user_state == mes_descr):  # if time_from_lastRun == 1 & got feedback
+            self.urge = 1
+            print('matching', user_state)
+            
         else:
-                self.urge = 0.2
-                print('other')
+            print('not matching', user_state, mes_descr)
+            self.urge = 0
+
+       
+
 
         '''
         # get current urge value based on last_run and last_urge
@@ -128,7 +137,7 @@ class Human(object):
         
         weather_prob = self.getProb(state[3:9], action)
         #total_prob = self.memory * self.urge * weather_prob * self.prob * self.preference
-        total_prob = self.urge #* weather_prob
+        total_prob = self.urge 
         
         return total_prob, weather_prob
 

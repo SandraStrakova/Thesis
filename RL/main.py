@@ -23,6 +23,10 @@ import time
 
 DISPLAY_REWARD_THRESHOLD = 100  # show visual window when reward > 400
 RENDER = False
+
+AGENT = 'Reinforce'
+EVAL = False
+
 """" set up the dictionary for saving """
 
 # This is an example main function for running one simulation. You may set up your own code for running different experiments (and multiple jobs).
@@ -68,6 +72,7 @@ def oneEnvironment(i_run):
     saveInfo.saveTofile(wrong_n_d, "day_train_wrong", i_run)
     saveInfo.saveTofile(extra_wrong_n_d, "day_train_extra_wrong", i_run)
     
+
     #Random_fix algorithm: send notification with maximal init.maxnotification/7 per day at fixed times
     agent_fix = fixed_day.Random()
     raw_rewards_f, notification_left_f, wrong_n_f, extra_wrong_n_f = run_save.run_random(agent_fix, 'fix', env, i_run)
@@ -91,7 +96,7 @@ def oneEnvironment(i_run):
     
     '''
     #baseline = np.mean(raw_rewards_f) #raw_rewards_w
-    baseline = 3.5
+    baseline = 3.5 #a baseline is subtracted from the obtained return while calculating the gradient.
     '''
     #RL agents
     # REINFORCE algorithm: send notification with no maximal notifications
@@ -103,20 +108,38 @@ def oneEnvironment(i_run):
     saveInfo.saveTofile(wrong_n_rb_train + wrong_n_rb_test, "reinforce_train_wrong", i_run)
     saveInfo.saveTofile(extra_wrong_n_rb_train + extra_wrong_n_rb_test, "reinforce_train_extra_wrong", i_run)
     '''
+
     # REINFORCE_restrict algorithm: send notification with maximal init.max_notification
-    agent_restrict_win = RESTRICT_win_baseline.REINFORCE(init.args.hidden_size, 20, env.action_space, baseline) #27
+    agent_restrict_win = RESTRICT_win_baseline.REINFORCE(init.args.hidden_size, 2, env.action_space, baseline) #27
     raw_rewards_rw_train, notification_left_rw_train, wrong_n_rw_train, extra_wrong_n_rw_train, agent_restrict_learned = run_save.run_learn(agent_restrict_win, 'restrict_win',env, i_run, baseline, init.args.num_episodes)
     saveInfo.saveTofile(raw_rewards_rw_train, "restrict_win_train", i_run)
-    saveInfo.saveTofile(notification_left_rw_train, "restrict_win_notification", i_run)
-    saveInfo.saveTofile(wrong_n_rw_train, "restrict_win_wrong", i_run)
-    saveInfo.saveTofile(extra_wrong_n_rw_train, "restrict_win_extra_wrong", i_run)
+    #saveInfo.saveTofile(notification_left_rw_train, "restrict_win_notification", i_run)
+    #saveInfo.saveTofile(wrong_n_rw_train, "restrict_win_wrong", i_run)
+    #saveInfo.saveTofile(extra_wrong_n_rw_train, "restrict_win_extra_wrong", i_run)
+    
+    '''
+    agent = RESTRICT_win_baseline.REINFORCE(init.args.hidden_size, 3, env.action_space, baseline)
+    agent.accessModel()
+    agent.accessOptimizer()
+        # [{'lr': 0.002, 'betas': (0.9, 0.999), 'eps': 1e-08, 'weight_decay': 0, 'amsgrad': False, 'maximize': False, 'foreach': None, 
+        #                                   'capturable': False, 'differentiable': False, 'fused': None, 'params': [0, 1, 2, 3, 4, 5]}]
 
-    
-    
+        
+    #Evaluation
+
+    agent_restrict_test = RESTRICT_win_baseline.REINFORCE(init.args.hidden_size, 4, env.action_space, baseline) #27
+    raw_rewards_rw_test, notification_left_rw_train, wrong_n_rw_train, extra_wrong_n_rw_train = run_save.run_test(agent_restrict_test, 'restrict_test',env, i_run)
+    saveInfo.saveTofile(raw_rewards_rw_test, "restrict_win_test", i_run)
+    #saveInfo.saveTofile(notification_left_rw_train, "restrict_win_notification", i_run)
+    #saveInfo.saveTofile(wrong_n_rw_train, "restrict_win_wrong", i_run)
+    #saveInfo.saveTofile(extra_wrong_n_rw_train, "restrict_win_extra_wrong", i_run)
+    '''
+
+
     env.close()
     
     
     
 
 if __name__ == '__main__':
-    oneEnvironment(3)
+    oneEnvironment(1)
