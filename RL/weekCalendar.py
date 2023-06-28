@@ -28,7 +28,8 @@ class weekMatrix(): #object
         self.n_height = n_height
         self.n_width = n_width
         self.len = n_width * n_height
-        self.index_in_data = np.random.randint(0, 35713) #(start_index_in_data + episode * init.max_decsionPerWeek)) # a maximum index of 1800 * 12 + 20000 * 84 = 1701600 according to the original settings
+        self.max_index = df.shape[0]-84     #the array goes up to 17724
+        self.index_in_data =  np.random.choice(np.arange(0, self.max_index, 84)) #np.random.randint(0, 35713) #(start_index_in_data + episode * init.max_decsionPerWeek)) # a maximum index of 1800 * 12 + 20000 * 84 = 1701600 according to the original settings
                                                             #start_index = random_index from randrange(1800) * init.max_decsionPerDay
                                                             #num episodes from init = 200
                                                                 #in the generateCalendar function, we loop over the number of episodes (for i in range(num)) -> i becomes the episode
@@ -47,17 +48,21 @@ class weekMatrix(): #object
         self.total_run = 0
         self.notification_left = init.max_notification # notification_per_day * dayOfWeek = 2 * 7 = 14
         self.reward_total = 0.0
-       
-        for x in range(self.n_width):
+      
+        for x in range(self.n_width): # 7 days (0-6 index)
             for y in range(self.n_height):
-                self.grids.append(decisionPoint.decisionPoint(episode, x, y, self.readContext(self.index_in_data, init.max_decsionPerDay * x + y, df))) # 12 * 7 + 12 = 96
+                #self.grids.append(decisionPoint.decisionPoint(episode, x, y, self.readContext(self.index_in_data, init.max_decsionPerDay * x + y, df))) #+y # 12 * 7 + 12 = 96
+                self.grids.append(decisionPoint.decisionPoint(episode, x, y, self.readContext(self.index_in_data,init.max_decsionPerDay * x + y, df))) 
+                
+                #self.index_in_data += 1
 
 
-    def readContext(self, start_index, index, df):
+    def readContext(self, start_index, index, df): #, index
         # ['Weekday', 'Hour', 'Temperatuur', 'WeerType', 'WindType', 'LuchtvochtigheidType']
-        #print(start_index, index)
+        #print('DATA INDEX',start_index + index)
+        #print(df.iloc[13608])
         state = df.iloc[start_index + index]
-  
+        #print('STATE', state) 
         return np.array(state)
 
     ##
@@ -68,7 +73,7 @@ class weekMatrix(): #object
         #print("index is ", index)	
         #print("len ", len(self.grids))
         return self.grids[index]
-
+    
     def setTotalRun(self, total_run):
         self.total_run = total_run
 

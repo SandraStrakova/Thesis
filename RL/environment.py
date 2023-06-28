@@ -87,7 +87,8 @@ class HumanEnv(gym.Env):
 
         self.random_index = randrange(1800) * init.max_decsionPerDay # doesn't matter, (see weekCalendar.py, __init__)
         self.calendars = self.generateCalendar(num_episode, self.random_index, df)  # generate all calendars from data
-
+        
+        
 
         self.current_episode = None
         self.current_index = None
@@ -102,8 +103,8 @@ class HumanEnv(gym.Env):
         # self.goal_threshold = 3   # the total goal (frequency of run) in one episode
 
         # 0,1 represent send, not send.
-        self.action_space = spaces.Discrete(6)  #gym class: {0,1,2...}
-
+        self.action_space = spaces.Discrete(2)  #gym class: {0,1,2...}
+        self.message_space = spaces.Discrete(7) #7 with feedback
         # observation = ['Notification_left', 'Time_from_lastRun', 'Time_from_lastNotifi',
         ## 'weekday', 'hour', 'state', 'BS', 'SE', 'Regen'].
         low = np.array([
@@ -126,7 +127,8 @@ class HumanEnv(gym.Env):
             3, #BS
             1, #SE
             1]) #Regen
-        self.observation_space = spaces.Box(low, high, dtype=np.uint8)
+        
+        self.observation_space = spaces.Box(low, high, dtype=np.uint8) #Specifically, a Box represents the Cartesian product of n closed intervals. 
 
     def getRandom_index(self):
         return self.random_index
@@ -149,6 +151,7 @@ class HumanEnv(gym.Env):
             calendars = np.append(calendars, weekCalendar.weekMatrix(init.dayOfWeek, init.max_decsionPerDay, start_index, i, df)) # n_width,  n_height, start_index_in_data, episode, df
         
         print("calendars generated ", calendars[0].__dict__['grids'][0].__dict__  )
+        #print(calendars[0].__dict__)
               
               # {'grids': [array of decision point objects], 'n_height': 12, 'n_width': 7, 'len': 84, 'index_in_data': 881, 'total_run': 0, 'notification_left': 14, 'reward_total': 0.0}}
               
@@ -176,7 +179,7 @@ class HumanEnv(gym.Env):
         Description:
             Read the calender info of each episode, as well as the environment's state at the start of current episode.
         Args:
-            index_episode (int): An index of the current episode, used for get the context information from data.
+            index_episode (int): An index of the current episode, used for getting the context information from data.
 
         Info:
             state = np.array(['Notification_left', 'Time_from_lastRun', 'Time_from_lastNotifi',
@@ -197,7 +200,7 @@ class HumanEnv(gym.Env):
         if self.last_run_index is None:  # set there is no run ever, initialization as urge = 1
             self.last_run_index = - init.hour_to_urge - 1
         else:  # continue from last calendar
-            self.last_run_index = self.last_run_index - init.max_decsionPerWeek
+            self.last_run_index = self.last_run_index - init.max_decsionPerWeek -12
 
         if self.last_notification_index is None:
             # set there is no notification ever, initialization based on random initialized memory
@@ -208,6 +211,7 @@ class HumanEnv(gym.Env):
             self.last_notification_index = self.last_notification_index - init.max_decsionPerWeek
 
         # self.current_calendar.getGrid(0).getContext() =  np.array(['Weekday', 'Hour', 'Temperatuur', 'WeerType', 'WindType', 'LuchtvochtigheidType'])
+        #print('get context', self.calendars.size) # 1
         self.current_state = np.append(np.array([init.max_notification, self.current_index - self.last_run_index, self.current_index - self.last_notification_index]),
                                self.calendars[index_episode].getGrid(0).getContext())
 
@@ -225,7 +229,7 @@ class HumanEnv(gym.Env):
             calendar.setNotificationLeft(init.max_notification)
             calendar.setTotalReward(0.0)
 
-    def step(self, action):
+    def step(self, action, message):
         """
         Description:
             Step the environment using the chosen action by one timestep.
@@ -236,57 +240,65 @@ class HumanEnv(gym.Env):
                 'weekday', 'hour', 'Temperatuur', ''WeerType', 'WindType', 'LuchtvochtigheidType'])
         Return: state (np.array), reward (float), done, info
                 """
-        assert self.action_space.contains(action), "%r (%s) invalid" % (action, type(action)) # check if the action is valid (whether it is containted in the action space)
+        #assert self.action_space.contains(action), "%r (%s) invalid" % (action, type(action)) # check if the action is valid (whether it is containted in the action space)
+        #assert self.message_space.contains(message), "%r (%s) invalid" % (message, type(message))
         index = self.current_index
         current_state = self.current_state
 
         """update the probability of send notification based on the current policy"""
 
         # if send notification
-                # for now we always send notification 
-        #if action == 1:
+            
+        if action == 1:
             # update the notification info in corresponding decision point object
-        self.calendars[self.current_episode].getGrid(index).setNotification(True)
+            self.calendars[self.current_episode].getGrid(index).setNotification(True)
 
-            # update the notification_left in corresponding calendar object
-        self.calendars[self.current_episode].setNotificationLeft(self.calendars[self.current_episode].getNotificationLeft() - 1)
+                # update the notification_left in corresponding calendar object
+            self.calendars[self.current_episode].setNotificationLeft(self.calendars[self.current_episode].getNotificationLeft() - 1)
 
-            # update the last_run_index in this environment object
-        self.last_notification_index = index
+                # update the last_notif_index in this environment object
+            self.last_notification_index = index
         
-        '''
+        
         else:
             # update the notification info in corresponding decision point object
             self.calendars[self.current_episode].getGrid(index).setNotification(False)
-        '''
+        
 
         """given action and current_state, the user decide to run or not"""
-        run, prob, weather_prob = self.human.isRun(action, current_state, index)
+        run, prob, relevant = self.human.isRun(action, message, current_state, index)
         # update the run_prob and weather_prob info in corresponding decision point object
         self.calendars[self.current_episode].getGrid(index).setProb(prob)
         
         #self.calendars[self.current_episode].getGrid(index).setWeatherProb(weather_prob)
 
-        if run:   # if run:
-            reward = init.reward
-
+        if run:
             # update the run info in corresponding decision point object
             self.calendars[self.current_episode].getGrid(index).setRun(True)
 
             # update the the number of total in corresponding calendar object
             self.calendars[self.current_episode].setTotalRun(self.calendars[self.current_episode].getTotalRun() + 1)
-
-            # update the total reward in corresponding calendar object
-            self.calendars[self.current_episode].setTotalReward(self.calendars[self.current_episode].getTotalReward() + 1.0)
-
+            
             # update the last_run_index in this environment object
             self.last_run_index = index
 
         else:   # if not run
-            reward = 0.0
-
+             
             # update the run info in corresponding decision point object
             self.calendars[self.current_episode].getGrid(index).setRun(False)
+
+
+        if relevant:   
+            reward = init.reward
+
+            # update the total reward in corresponding calendar object
+            self.calendars[self.current_episode].setTotalReward(self.calendars[self.current_episode].getTotalReward() + 1.0)
+
+        else:
+            reward = 0.0
+            #total reward not updated
+
+        
 
         # return all information of calendar in 'info', info is a dict
         info = {"calendars": self.calendars, "notification": self.calendars[self.current_episode].getNotificationLeft()}
@@ -295,9 +307,11 @@ class HumanEnv(gym.Env):
         done = self.isEnd()
 
         if done:
-            #print ("This episode is done.")
-            # return
+            print ("This episode is done.")
+            #print(self.current_state)
+            #self.human.resetIntention()
             return self.current_state, reward, done, info
+
 
         else:
 
@@ -305,13 +319,17 @@ class HumanEnv(gym.Env):
             self.current_index = index + 1
 
             """If we consider the night break"""
-            if self.current_index % init.max_decsionPerDay == 0:
+            if self.current_index % init.max_decsionPerDay == 0: # self.current_index = 12, 24, 36, 48, 60, 72, 84
+                print("Night break, lastPA", self.current_index - self.last_run_index + 12)
+                #state: np.array(['Notification_left', 'Time_from_lastRun', 'Time_from_lastNotifi', context])
+                self.last_run_index = (self.last_run_index - 12)
                 self.current_state = np.append(
                     np.array([self.calendars[self.current_episode].getNotificationLeft(),
-                              self.current_index - self.last_run_index + 8,
-                              self.current_index - self.last_notification_index + 8]),
+                              self.current_index - (self.last_run_index - 12), # 12 hours night break
+                              self.current_index - (self.last_notification_index - 12)]),
                               self.calendars[self.current_episode].getGrid(self.current_index).getContext())
             else:
+                print('Other index',self.current_index - self.last_run_index )
                 self.current_state = np.append(
                     np.array([self.calendars[self.current_episode].getNotificationLeft(),
                               self.current_index - self.last_run_index,

@@ -21,10 +21,16 @@ from torch.autograd import Variable
 import numpy as np
 import __init__ as init
 
+import random
+num = np.arange(0, 17724, 84)
+#print(num)
+
+data = 'C:\\Users\\sebas\\Documents\\GitHub\\Thesis\\RL\\state_12.csv'
+df = pd.read_csv(data, encoding='utf-8-sig', sep=';').dropna()
 
 
-path = 'C:\\Users\\sebas\\Desktop\\3_999.csv'
-path = os.getcwd() + '\\RL\\finalresult\\restrict_win_policy\\3_299.pt'
-buffer = torch.load(path)
-print(buffer)
-
+message_data = 'C:\\Users\\sebas\\Desktop\\messages.csv'
+df_mssg = pd.read_csv(message_data, encoding='unicode_escape',sep=';').dropna()
+filter_ = df_mssg[df_mssg['phases'] == 'INITIATION']['message']
+#print(df_mssg['message'].head())
+print(filter_.iloc[0])

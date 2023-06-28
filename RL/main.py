@@ -4,7 +4,8 @@ import pandas as pd
 import numpy as np
 import os
 #import REINFORCE_baseline as REINFORCE_baseline
-import RESTRICT_win_baseline as RESTRICT_win_baseline
+import RESTRICT_win_baseline
+import RESTRICT_mssg_baseline
 #import Learned as learned
 import fixed_day as fixed_day
 #import random_week as random_week
@@ -21,11 +22,10 @@ import re
 #from multiprocessing import Process, Manager, Value, Lock
 import time
 
-DISPLAY_REWARD_THRESHOLD = 100  # show visual window when reward > 400
+DISPLAY_REWARD_THRESHOLD = 100  
 RENDER = False
 
-AGENT = 'Reinforce'
-EVAL = False
+EVAL = True
 
 """" set up the dictionary for saving """
 
@@ -33,28 +33,34 @@ EVAL = False
 def oneEnvironment(i_run):
 
     """read Context info from documents and put them in df"""
-    #input = os.path.expanduser(init.dict + "knmi_weekday_old.csv")
-    input = os.path.expanduser(init.dict + "state.csv")   #temperature replaced by state (the file structure was kept the same for ease of reading but the other variables won't be used)
-    df = pd.read_csv(input, encoding='utf-8-sig', sep=';').dropna()
-    df['BS'].replace('     ', np.nan, inplace=True)
-    df['Regen'].replace('     ', np.nan, inplace=True)
-
-    df.dropna(subset=['BS'], inplace=True)
-    df.dropna(subset=['Regen'], inplace=True)
+    input = os.path.expanduser(init.dict + "state_12.csv")   #temperature replaced by state (the file structure was kept the same for ease of reading but the other variables won't be used)
     
-    df = df.astype('int64')
-    print(df.dtypes)
+    df = pd.read_csv(input, encoding='utf-8-sig', sep=';').dropna()
+    
+    #df['BS'].replace('     ', np.nan, inplace=True)
+    #df['Regen'].replace('     ', np.nan, inplace=True)
+
+    #df.dropna(subset=['BS'], inplace=True)
+    #df.dropna(subset=['Regen'], inplace=True)
+    
+    #df = df.astype('int64')
+    #print(df.dtypes)
    
     
     """" set up the training environment """
-    #env = environment_withNight.HumanEnv(init.args.num_episodes, df) #init refers to the __init__.py file
-    env = environment.HumanEnv(init.args.num_episodes, df) #init refers to the __init__.py file
 
+    if EVAL:
+        env = environment.HumanEnv(init.args.test_episodes, df)
+        
+    else:
+        env = environment.HumanEnv(init.args.num_episodes, df) 
     
     # random seed
     env.seed(init.args.seed)
     torch.manual_seed(init.args.seed)
     np.random.seed(init.args.seed)
+
+    
 
     # delete the wrap
     env = env.unwrapped
@@ -63,59 +69,48 @@ def oneEnvironment(i_run):
 
     #Baseline agents
     
+    
+    #if RANDOM:
+    if EVAL:
+            #Random_fix algorithm: send notification with maximal init.maxnotification/7 per day at fixed times
+            agent_fix = fixed_day.Random()
+            raw_rewards_f, notification_left_f = run_save.run_random(agent_fix, 'fix_test', env, i_run, init.args.test_episodes)
+            saveInfo.saveTofile(raw_rewards_f, "fix_test", i_run)
+            #saveInfo.saveTofile(notification_left_f, "fix_train_notification", i_run)
+            #saveInfo.saveTofile(wrong_n_f, "fix_train_wrong", i_run)
+            #saveInfo.saveTofile(extra_wrong_n_f, "fix_train_extra_wrong", i_run)
     '''
-    #Random_day algorithm: send notification with maximal init.maxnotification/7 per day randomly
-    agent_day = random_day.Random()
-    raw_rewards_d, notification_left_d, wrong_n_d, extra_wrong_n_d = run_save.run_random(agent_day, 'day', env, i_run)
-    saveInfo.saveTofile(raw_rewards_d, "day_train", i_run)
-    saveInfo.saveTofile(notification_left_d, "day_train_notification", i_run)
-    saveInfo.saveTofile(wrong_n_d, "day_train_wrong", i_run)
-    saveInfo.saveTofile(extra_wrong_n_d, "day_train_extra_wrong", i_run)
-    
-
-    #Random_fix algorithm: send notification with maximal init.maxnotification/7 per day at fixed times
-    agent_fix = fixed_day.Random()
-    raw_rewards_f, notification_left_f, wrong_n_f, extra_wrong_n_f = run_save.run_random(agent_fix, 'fix', env, i_run)
-    #raw_rewards_f, notification_left_f, wrong_n_f, extra_wrong_n_f = run_save.run_random(agent_fix, 'fix', env, i_run)
-
-
-    #saveInfo.saveTofile(raw_rewards_f, "fix_train", i_run)
-    #saveInfo.saveTofile(notification_left_f, "fix_train_notification", i_run)
-    #saveInfo.saveTofile(wrong_n_f, "fix_train_wrong", i_run)
-    #saveInfo.saveTofile(extra_wrong_n_f, "fix_train_extra_wrong", i_run)
-    
-    
-    #Random_week algorithm: send notification with maximal init.maxnotification randomly
-    agent_week = random_week.Random()
-    raw_rewards_w, notification_left_w, wrong_n_w, extra_wrong_n_w = run_save.run_random(agent_week, 'week', env, i_run)
-    saveInfo.saveTofile(raw_rewards_w, "week_train", i_run)
-    saveInfo.saveTofile(notification_left_w, "week_train_notification", i_run)
-    saveInfo.saveTofile(wrong_n_w, "week_train_wrong", i_run)
-    saveInfo.saveTofile(extra_wrong_n_w, "week_train_extra_wrong", i_run)
-        # return self.grids[index] gives index out of range   
-    
+    else:
+             #Random_fix algorithm: send notification with maximal init.maxnotification/7 per day at fixed times
+            agent_fix = fixed_day.Random()
+            raw_rewards_f, notification_left_f = run_save.run_random(agent_fix, 'fix', env, i_run, init.args.num_episodes)
+            saveInfo.saveTofile(raw_rewards_f, "fix_train", i_run)
+            #saveInfo.saveTofile(notification_left_f, "fix_train_notification", i_run)
+            #saveInfo.saveTofile(wrong_n_f, "fix_train_wrong", i_run)
+            #saveInfo.saveTofile(extra_wrong_n_f, "fix_train_extra_wrong", i_run)
     '''
-    #baseline = np.mean(raw_rewards_f) #raw_rewards_w
+       
+        
+    #else:
     baseline = 3.5 #a baseline is subtracted from the obtained return while calculating the gradient.
-    '''
-    #RL agents
-    # REINFORCE algorithm: send notification with no maximal notifications
-    agent_baseline = REINFORCE_baseline.REINFORCE(init.args.hidden_size, 27, env.action_space, baseline)
-    raw_rewards_rb_train, notification_left_rb_train, wrong_n_rb_train, extra_wrong_n_rb_train, agent_reinforce_learned = run_save.run_learn(agent_baseline, 'reinforce', env, i_run, baseline, init.args.num_episodes) #- init.args.left_episodes)
-    raw_rewards_rb_test, notification_left_rb_test, wrong_n_rb_test, extra_wrong_n_rb_test = run_save.run_restrict(agent_reinforce_learned,'reinforce', env, i_run, baseline, init.args.test_episodes, init.args.test_episodes) #- init.args.left_episodes, init.args.test_episodes)
-    saveInfo.saveTofile(raw_rewards_rb_train + raw_rewards_rb_test, "reinforce_train", i_run)
-    saveInfo.saveTofile(notification_left_rb_train + notification_left_rb_test, "reinforce_train_notification", i_run)
-    saveInfo.saveTofile(wrong_n_rb_train + wrong_n_rb_test, "reinforce_train_wrong", i_run)
-    saveInfo.saveTofile(extra_wrong_n_rb_train + extra_wrong_n_rb_test, "reinforce_train_extra_wrong", i_run)
-    '''
+    if EVAL:
+            #Evaluation
 
-    # REINFORCE_restrict algorithm: send notification with maximal init.max_notification
-    agent_restrict_win = RESTRICT_win_baseline.REINFORCE(init.args.hidden_size, 2, env.action_space, baseline) #27
-    raw_rewards_rw_train, notification_left_rw_train, wrong_n_rw_train, extra_wrong_n_rw_train, agent_restrict_learned = run_save.run_learn(agent_restrict_win, 'restrict_win',env, i_run, baseline, init.args.num_episodes)
-    saveInfo.saveTofile(raw_rewards_rw_train, "restrict_win_train", i_run)
-    #saveInfo.saveTofile(notification_left_rw_train, "restrict_win_notification", i_run)
-    #saveInfo.saveTofile(wrong_n_rw_train, "restrict_win_wrong", i_run)
-    #saveInfo.saveTofile(extra_wrong_n_rw_train, "restrict_win_extra_wrong", i_run)
+            agent_restrict_win_test = RESTRICT_mssg_baseline.REINFORCE(init.args.hidden_size, 3, env.message_space, baseline) #27
+            raw_rewards_rw_test, notification_left_rw_test, wrong_n_rw_test, extra_wrong_n_rw_test, agent_restrict_learned = run_save.run_test(agent_restrict_win_test, 'restrict_win_test',env, i_run, init.args.test_episodes)
+            saveInfo.saveTofile(raw_rewards_rw_test, "restrict_win_test", i_run)
+            #saveInfo.saveTofile(notification_left_rw_test, "restrict_win_notification_test", i_run)
+            #saveInfo.saveTofile(wrong_n_rw_test, "restrict_win_wrong_test", i_run)
+            #saveInfo.saveTofile(extra_wrong_n_rw_test, "restrict_win_extra_wrong_test", i_run)
+
+    else:
+            # REINFORCE_restrict algorithm: send notification with maximal init.max_notification
+            agent_restrict_win = RESTRICT_mssg_baseline.REINFORCE(init.args.hidden_size, 3, env.message_space, baseline) #27
+            raw_rewards_rw_train, notification_left_rw_train, wrong_n_rw_train, extra_wrong_n_rw_train, agent_restrict_learned = run_save.run_learn_double(agent_restrict_win, 'restrict_win',env, i_run, baseline, init.args.num_episodes)
+            saveInfo.saveTofile(raw_rewards_rw_train, "restrict_win_train", i_run)
+            #saveInfo.saveTofile(notification_left_rw_train, "restrict_win_notification", i_run)
+            #saveInfo.saveTofile(wrong_n_rw_train, "restrict_win_wrong", i_run)
+            #saveInfo.saveTofile(extra_wrong_n_rw_train, "restrict_win_extra_wrong", i_run)
     
     '''
     agent = RESTRICT_win_baseline.REINFORCE(init.args.hidden_size, 3, env.action_space, baseline)
@@ -124,16 +119,9 @@ def oneEnvironment(i_run):
         # [{'lr': 0.002, 'betas': (0.9, 0.999), 'eps': 1e-08, 'weight_decay': 0, 'amsgrad': False, 'maximize': False, 'foreach': None, 
         #                                   'capturable': False, 'differentiable': False, 'fused': None, 'params': [0, 1, 2, 3, 4, 5]}]
 
-        
-    #Evaluation
-
-    agent_restrict_test = RESTRICT_win_baseline.REINFORCE(init.args.hidden_size, 4, env.action_space, baseline) #27
-    raw_rewards_rw_test, notification_left_rw_train, wrong_n_rw_train, extra_wrong_n_rw_train = run_save.run_test(agent_restrict_test, 'restrict_test',env, i_run)
-    saveInfo.saveTofile(raw_rewards_rw_test, "restrict_win_test", i_run)
-    #saveInfo.saveTofile(notification_left_rw_train, "restrict_win_notification", i_run)
-    #saveInfo.saveTofile(wrong_n_rw_train, "restrict_win_wrong", i_run)
-    #saveInfo.saveTofile(extra_wrong_n_rw_train, "restrict_win_extra_wrong", i_run)
     '''
+    
+
 
 
     env.close()

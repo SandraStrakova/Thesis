@@ -13,12 +13,19 @@ dict = str(os.getcwd()) + '\\RL\\'
 Parameters in psychological model
 """
 hour_to_forget = 20
-memory_scale = round(math.pow(0.001, (1.0 /hour_to_forget)), 2) #0.71
+#memory_scale = round(math.pow(0.001, (1.0 /hour_to_forget)), 2) #0.71
 memory_scale = 0.8
 
+hour_to_intent = 20
+intent_scale = 0.8
+intent_c = round(1.0 / hour_to_intent, 2) # 0.05
+
+
 hour_to_urge = 20
-urge_scale = round(1.0 / hour_to_urge, 2) # 0.05
 prob_run = 0.1
+
+se_scale = 0.8
+
 
 """
 Parameters in simulator
@@ -39,10 +46,10 @@ max_decsionPerDay = 12
 reward = 1.0
 
 max_notification = notification_per_day * dayOfWeek
-max_decsionPerWeek = max_decsionPerDay * dayOfWeek 
+max_decsionPerWeek = max_decsionPerDay * dayOfWeek #84
 loop_num = 7 / dayOfWeek
 
-fixed_hour = [11, 17]
+fixed_hours = [10, 14]
 
 """
 Parameters in algorithm
@@ -58,7 +65,7 @@ parser.add_argument('--num_steps', type=int, default=100, metavar='N', #default=
                     help='max episode length (default: 1000)')
 parser.add_argument('--num_episodes', type=int, default=2000, metavar='N', #default=20000
                     help='number of episodes (default: 20000)')
-parser.add_argument('--test_episodes', type=int, default=100, metavar='N', #default=20000
+parser.add_argument('--test_episodes', type=int, default=2, metavar='N', #default=20000
                     help='number of testing episodes (default: 20000)')
 parser.add_argument('--hidden_size', type=int, default=16, metavar='N',
                     help='number of episodes (default: 128)')

@@ -42,9 +42,9 @@ class REINFORCE():
         # define the network
         self.model = Policy(hidden_size, num_inputs, action_space)
         self.model = self.model.to(device=torch.device("cuda")) #for the case of GPU
-        self.model.train()
-        #self.model.load_state_dict(torch.load(init.dict + 'finalresult\\restrict_win_policy\\3_1999.csv')) #for evaluation
-        #self.model.eval() #default True
+        self.model.load_state_dict(torch.load(init.dict + 'policy_w_feedback.csv')) #load a learned policy
+        #self.model.train()
+        self.model.eval()
         self.optimizer = optim.Adam(self.model.parameters(), lr=0.002)
         self.baseline = baseline
         #self.average_return = np.zeros((init.max_decsionPerWeek))
@@ -76,40 +76,34 @@ class REINFORCE():
     def select_action(self, raw_state):
 
         # once there is no notification left
-        '''
-        if raw_state[0] == 0:
-
+        
+        time_last_PA = raw_state[1] 
+       
             # normalize the state values
-            state = torch.Tensor([self.normalizeState(raw_state)])
+        normalized_state = self.normalizeState(raw_state)
+        state = torch.Tensor([normalized_state]) 
 
-            # always take action 0, log_prob = 0.0
-            action_index = torch.tensor([0], dtype=torch.int32).cuda()
-            log_prob = torch.tensor([[0.0]], dtype=torch.float).cuda()
-            probs = self.model(Variable(state)).cuda()
-            
-            return action_index, log_prob, probs[0][1]
+            # neural network calculates the probability of all actions based on this state
+        probs = self.model(Variable(state)).cuda()
+
+        
+        if time_last_PA < 12:
+            message_index = torch.tensor([[6]], dtype=torch.int32)
 
         else:
-        '''
         
-                # normalize the state values
-        state = torch.Tensor([self.normalizeState(raw_state)]) 
-                    #user warning: making a tensor from multiple numpy arrays is very slow, consider converting it to a single array first
-
-                # neural network calculates the probability of all actions based on this state
-        probs = self.model(Variable(state)).cuda() 
-                
-                # randomly select from 0 & 1 based on probability given in probs
-        action_index = probs.multinomial(1).data # returns an index of the actions, example: tensor([[2, 3, 1, 6]], device='cuda:0') 
-                
-                # get the probability of selected action
-        prob = probs[:, action_index[0, 0].type(torch.int64)].view(1, -1) # Example: tensor([[0.0034, 0.0015, 0.7659, 0.1469, 0.0097, 0.0273, 0.0452]], device='cuda:0', grad_fn=<SoftmaxBackward0>)
-                                                                                    #action 2 is selected
-                
-                # calculate the log(prob) for the selected action at each state
+            # randomly select from 0 & 1 based on probability given in probs
+            message_index = probs.multinomial(4).data # returns an index of the actions, example: tensor([[2, 3, 1, 6]], device='cuda:0') 
+            
+            # get the probability of selected action
+        prob = probs[:, message_index[0, 0].type(torch.int64)].view(1, -1) # Example: tensor([[0.0034, 0.0015, 0.7659, 0.1469, 0.0097, 0.0273, 0.0452]], device='cuda:0', grad_fn=<SoftmaxBackward0>)
+                                                                                #action 2 is selected
+        
+            
+            # calculate the log(prob) for the selected action at each state
         log_prob = prob.log()
 
-        return action_index[0], log_prob, probs[0][1]
+        return message_index[0], log_prob, probs[0][1]
 
     def normalizeState(self, state):
         """
@@ -129,17 +123,19 @@ class REINFORCE():
         """
         # first, perform maximum normalization for continuous variables
 
-        
+        '''
         new_state = np.array([init.mm_normalized(state[0], 0, init.max_notification), 
                               init.mm_normalized(state[1], 0, init.max_decsionPerWeek - 1),
                           init.mm_normalized(state[2], 0, init.max_decsionPerWeek - 1),
                           init.mm_normalized(state[4], 0, 24)])
-        
+        '''
         # next, perform one-hot encoding for categorical variables (weekday, state, BS, SE, regen)
-        #new_state = np.append(new_state, init.onehot_normalized_all(state[[3, 5, 6, 7, 8]]))  
         
+        #new_state = np.append(new_state, init.onehot_normalized_all(state[[3, 5, 6, 7, 8]]))  
         #new_state =  np.array([init.mm_normalized(state[1], 0, init.max_decsionPerWeek - 1)]) #time from last run
-        new_state = np.append(new_state, np.array([int(state[6]),int(state[7])]))
+        new_state = np.array([init.mm_normalized(state[1], 0, init.max_decsionPerWeek - 1),
+                              int(state[6]),int(state[7])]) #
+        
 
         return new_state
 
@@ -159,11 +155,11 @@ class REINFORCE():
 
         self.updatePastWindow(returns)
         #print returns
-        returns = torch.tensor(np.array(returns) - np.array(self.getWinAveReturns()))#.cuda()
+        
+        returns = torch.tensor(np.array(returns) - np.array(self.getWinAveReturns()))
             #We inserted a baseline function G¯t inside the expectation to reduce the high variance, 
             # using the average of all returns Gt in the past n (i.e., all previous) episodes.
-        #print('returns', self.win_return)
-        #print('subtracted returns', returns)
+        #print('RETURNS', returns)
         # Loss = - sum(log(policy) * return)
         for log_prob, R in zip(log_probs, returns):
             policy_loss.append(-log_prob * R)
