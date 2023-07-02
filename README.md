@@ -1,4 +1,4 @@
-# Thesis
+# User-based tailoring using RL for content adaptation of an intervention for increasing physical activity in users with COPD
 
 
 
