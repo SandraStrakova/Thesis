@@ -73,20 +73,21 @@ class HumanEnv(gym.Env):
             current_calendar (object weekMatrix): The current calendar object.
             current_index (int): the index of step in the current calendar (index in a week).
             current_state (np.array): An array of current observation, ['Notification_left', 'Time_from_lastRun', 'Time_from_lastNotifi',
-                'weekday', 'hour', 'Temperatuur', ''WeerType', 'WindType', 'LuchtvochtigheidType'].
+                'weekday', 'hour', 'state', 'bs', 'se', 'regen'].
             last_run_index (int): the index of last run in this calendar.
             last_notification_index (int): the index of last notification in this calendar.
             steps_beyond_done (bool): whether this episode is done, True = done, False =  not done.
             action_space: spaces.Discrete(2)
+            message_space: spaces.Discrete(7)
             observation_space: spaces.Box(9)
             human (object dataGenerator.Human): The human simulator can decide whether to run or not.
             init_memory (float): the initial memory randomly generated, which needed to be saved for re-run the experiment
 
         Return: initial observation state (np.array)
         """
-
-        self.random_index = randrange(1800) * init.max_decsionPerDay # doesn't matter, (see weekCalendar.py, __init__)
-        self.calendars = self.generateCalendar(num_episode, self.random_index, df)  # generate all calendars from data
+        
+        self.random_index = randrange(21600) # not used in week calendar
+        self.calendars = self.generateCalendar(num_episode, df)  # generate all calendars from data
         
         
 
@@ -100,13 +101,12 @@ class HumanEnv(gym.Env):
         self.steps_beyond_done = None
         self.human = humanSimulator_withNight.Human()
         self.init_memory = self.human.getMemory()
-        # self.goal_threshold = 3   # the total goal (frequency of run) in one episode
 
         # 0,1 represent send, not send.
         self.action_space = spaces.Discrete(2)  #gym class: {0,1,2...}
         self.message_space = spaces.Discrete(7) #7 with feedback
         # observation = ['Notification_left', 'Time_from_lastRun', 'Time_from_lastNotifi',
-        ## 'weekday', 'hour', 'state', 'BS', 'SE', 'Regen'].
+                             ## 'weekday', 'hour', 'state', 'BS', 'SE', 'Regen'].
         low = np.array([
             0,
             0,
@@ -129,10 +129,10 @@ class HumanEnv(gym.Env):
             1]) #Regen
         
         self.observation_space = spaces.Box(low, high, dtype=np.uint8) #Specifically, a Box represents the Cartesian product of n closed intervals. 
-
+    
     def getRandom_index(self):
         return self.random_index
-
+    
     def getInit_memory(self):
         return self.init_memory
 
@@ -142,13 +142,13 @@ class HumanEnv(gym.Env):
     ##
     # Generate n calendars from data
     ##
-    def generateCalendar(self, num, start_index, df):
+    def generateCalendar(self, num, df):
 
         calendars = np.empty((0, 0), dtype='object')
         
         for i in range(num):
             # add one weekCalendar in np.array
-            calendars = np.append(calendars, weekCalendar.weekMatrix(init.dayOfWeek, init.max_decsionPerDay, start_index, i, df)) # n_width,  n_height, start_index_in_data, episode, df
+            calendars = np.append(calendars, weekCalendar.weekMatrix(init.dayOfWeek, init.max_decsionPerDay, i, df)) # n_width,  n_height, episode, df
         
         print("calendars generated ", calendars[0].__dict__['grids'][0].__dict__  )
         #print(calendars[0].__dict__)
@@ -183,7 +183,7 @@ class HumanEnv(gym.Env):
 
         Info:
             state = np.array(['Notification_left', 'Time_from_lastRun', 'Time_from_lastNotifi',
-                'weekday', 'hour', 'Temperatuur', ''WeerType', 'WindType', 'LuchtvochtigheidType'])
+                'weekday', 'hour', 'state', 'bs', 'se', 'regen'] ])
 
         Return: initial observation state (np.array)
         """
@@ -210,7 +210,7 @@ class HumanEnv(gym.Env):
         else:  # continue from last calendar
             self.last_notification_index = self.last_notification_index - init.max_decsionPerWeek
 
-        # self.current_calendar.getGrid(0).getContext() =  np.array(['Weekday', 'Hour', 'Temperatuur', 'WeerType', 'WindType', 'LuchtvochtigheidType'])
+        # self.current_calendar.getGrid(0).getContext() =  np.array(['Weekday', 'Hour', 'state', 'bs', 'se', 'regen'])
         #print('get context', self.calendars.size) # 1
         self.current_state = np.append(np.array([init.max_notification, self.current_index - self.last_run_index, self.current_index - self.last_notification_index]),
                                self.calendars[index_episode].getGrid(0).getContext())
@@ -235,19 +235,18 @@ class HumanEnv(gym.Env):
             Step the environment using the chosen action by one timestep.
         Args:
             action (int): 1 = sent, 0 = not sent
+            message (int): 0-6 = message index or None
         Info:
             state = np.array(['Notification_left', 'Time_from_lastRun', 'Time_from_lastNotifi',
-                'weekday', 'hour', 'Temperatuur', ''WeerType', 'WindType', 'LuchtvochtigheidType'])
+                'weekday', 'hour', 'state', 'bs', 'se', 'regen'])
         Return: state (np.array), reward (float), done, info
                 """
-        #assert self.action_space.contains(action), "%r (%s) invalid" % (action, type(action)) # check if the action is valid (whether it is containted in the action space)
-        #assert self.message_space.contains(message), "%r (%s) invalid" % (message, type(message))
         index = self.current_index
         current_state = self.current_state
 
         """update the probability of send notification based on the current policy"""
 
-        # if send notification
+       
             
         if action == 1:
             # update the notification info in corresponding decision point object
@@ -296,8 +295,6 @@ class HumanEnv(gym.Env):
 
         else:
             reward = 0.0
-            #total reward not updated
-
         
 
         # return all information of calendar in 'info', info is a dict
@@ -309,7 +306,6 @@ class HumanEnv(gym.Env):
         if done:
             print ("This episode is done.")
             #print(self.current_state)
-            #self.human.resetIntention()
             return self.current_state, reward, done, info
 
 

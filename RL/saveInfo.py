@@ -3,6 +3,7 @@ import numpy as np
 import pandas as pd
 import csv
 import os
+import weekCalendar
 import __init__ as init
 
 """" Some functions to save information during the running of agents """

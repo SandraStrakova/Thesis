@@ -13,7 +13,6 @@ dict = str(os.getcwd()) + '\\RL\\'
 Parameters in psychological model
 """
 hour_to_forget = 20
-#memory_scale = round(math.pow(0.001, (1.0 /hour_to_forget)), 2) #0.71
 memory_scale = 0.8
 
 hour_to_intent = 20
@@ -63,9 +62,9 @@ parser.add_argument('--seed', type=int, default=100, metavar='N',
                     help='random seed (default: 123)')
 parser.add_argument('--num_steps', type=int, default=100, metavar='N', #default=1000 #changing it here doesn't matter, the episode length is determined by is_End function in environment.py
                     help='max episode length (default: 1000)')
-parser.add_argument('--num_episodes', type=int, default=2000, metavar='N', #default=20000
+parser.add_argument('--num_episodes', type=int, default=10, metavar='N', #default=20000
                     help='number of episodes (default: 20000)')
-parser.add_argument('--test_episodes', type=int, default=2, metavar='N', #default=20000
+parser.add_argument('--test_episodes', type=int, default=100, metavar='N', #default=20000
                     help='number of testing episodes (default: 20000)')
 parser.add_argument('--hidden_size', type=int, default=16, metavar='N',
                     help='number of episodes (default: 128)')
@@ -102,19 +101,12 @@ def onehot_normalized(data, name):
 
 def getOneHotEncoder(arg):
     """" get the one-hot encoder """
-
-    
-
-    # changed the data into weekday, hour, temperature, bewolking, weercode, regen (though the names are the same)
-
     weekday = [[1], [2], [3], [4], [5], [6], [7]]
     state = [[0], [1]]
     bs = [[1], [2], [3]]
     se = [[0], [1]]
     regen = [[0], [1]]
-    #weather = [[0], [1], [2], [3], [4], [5], [6], [7], [8], [9]]
-    #wind = [[5], [6], [7]]
-    #humidity = [[0], [1]]
+    
 
 
     enc_weekday = preprocessing.OneHotEncoder()

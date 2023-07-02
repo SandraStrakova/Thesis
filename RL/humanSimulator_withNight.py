@@ -1,7 +1,6 @@
 ### This is the python code for simulation experiments in Wang, Zhang, Krose, & van Hoof, 2021
 import numpy as np
 import pandas as pd
-import pickle
 import random
 from pathlib import Path
 import __init__ as init
@@ -21,7 +20,6 @@ class Human(object):
 
     def __init__(self):
         self.memory = init.memory_scale ** random.randrange(init.hour_to_forget)  # random initialize #time from last run
-        #self.prob = init.prob_run
         
         self.intent =  round(init.intent_scale ** random.randrange(init.hour_to_intent), 3) #a value between 0.8 and 0.12
         
@@ -35,8 +33,6 @@ class Human(object):
     def getMemory(self):
         return self.memory
     
-    def resetIntention(self):
-        self.intent =  round(init.intent_scale ** random.randrange(init.hour_to_intent), 3)
         
 
     ##
@@ -44,10 +40,7 @@ class Human(object):
     ##
     def isRun(self, action, message, state, index):
         """
-        :param action: 1 is send notification, 0 is not.
-        :param state: np.array(['Notification_left', 'Time_from_lastRun', 'Time_from_lastNotifi',
-                          'weekday', 'hour', 'Temperatuur', ''WeerType', 'WindType', 'LuchtvochtigheidType'])
-        :return: Boolean True = run, False = not run
+        Decide whether run or not run based on the current state and message.
 
         """
         prob, weather_prob, relevant = self.computeProb(action,message,state, index)
@@ -72,18 +65,6 @@ class Human(object):
         print('self.intent existing: ', self.intent)
 
 
-        """Compute the probablity of run. P(PA_t | I_t, SE_t) 
-                                          P(PA_t | PA_t-1, I_t, N_t, SE_t)
-
-        Args:
-            action (bool): send notification or not, True = sent, False =  not sent.
-            state (np.array): ['Notification_left', 'Time_from_lastRun', 'Time_from_lastNotifi',
-                          'weekday', 'hour', 'Temperatuur', ''WeerType', 'WindType', 'LuchtvochtigheidType']
-            last_run (bool): run or not in the last time step, True = run, False =  not run.
-
-        Returns:
-            prob (float): probability of running, in [0,1].
-        """
 
         for m in self.messages:
             if m['ID'] == message:
@@ -125,7 +106,7 @@ class Human(object):
         elif bs == 3:
                  self.intent = self.intent * 0.43 # avg week + weekend / 5k*7: 7935+7283/35000 = 0.43
                  if se == 1:
-                    self.efficacy += 0.3
+                     self.efficacy += 0.3
         
 
 
@@ -134,13 +115,14 @@ class Human(object):
         if action == 1:        
             
             if time_lastPA < 12 and mes_descr == [4,4]:  # if time_from_lastRun < 12 & got feedback
+                    #remove for training
                 
                 relevant = True
                 if se == 1:
                     self.efficacy += 0.35 # added value of exercise
                 print('feedback', user_state, state[4])
-
-            elif time_lastPA > 12 and user_state == mes_descr:
+            
+            elif time_lastPA > 12 and user_state == mes_descr: #remove time restriction for training 
                 relevant = True
                 self.intent += 0.65
                 if se == 1:
@@ -169,41 +151,17 @@ class Human(object):
         
         
         weather_prob = 0 #self.getProb(state[3:9], action)
-        #total_prob = self.memory * self.urge * weather_prob * self.prob * self.preference
         
         total_prob = round(self.intent * self.efficacy , 3)
         
         return total_prob, weather_prob, relevant
 
 
-    def getProb(self, state, action): #context probability (from data)
-        """Compute the probability P(Ct | Rt = 1) / P(Ct) from data.
+    def getProb(self, state): #context probability (from data)
+        """
+        Compute the probability of PA based on weather
 
-            data saved in "/Users/Shihan/Desktop/Experiments/PAUL/rl/mylaps/weekday.csv"
-                        "/Users/Shihan/Desktop/Experiments/PAUL/rl/mylaps/model/"
-                        "/Users/Shihan/Desktop/Experiments/PAUL/rl/knmi/model/"
-            Args:
-                context (np.array): An array of context info ['Weekday', 'Hour', 'Temperatuur', 'WeerType', 'WindType', 'LuchtvochtigheidType'].
+        """
 
-            Returns:
-                prob (float): a probability in [0, ?) can be bigger than 1. !!!
-            """
-
-        inpath = init.dict
-
-        #weekday = context[:, 1][0]
-        #name = str(tuple(context[:, [3,4,5]][0]))
-        #data = context[:, [0,1]]
-
-        weekday = state[0]
-        name = str(tuple(state[3:])).replace('.0', '')
-        index = np.array([False, True, True, False, False, False])
-        data = state[index]
-
-        if state[5] == 1:
-            prob = 0.4
-        else:
-            prob = 0.8
-
-        return prob
+        return None
 
