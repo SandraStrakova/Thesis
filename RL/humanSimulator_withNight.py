@@ -1,11 +1,11 @@
 ### This is the python code for simulation experiments in Wang, Zhang, Krose, & van Hoof, 2021
 import numpy as np
 import pandas as pd
-import pickle
 import random
 from pathlib import Path
 import __init__ as init
 import os
+import json
 
 """"Consider the influence of night break"""
 
@@ -19,132 +19,149 @@ class Human(object):
     """
 
     def __init__(self):
-        self.memory = init.memory_scale ** random.randrange(init.hour_to_forget)  # random initialize
-        self.urge = 1   # start from 1
-        self.prob = init.prob_run
+        self.memory = init.memory_scale ** random.randrange(init.hour_to_forget)  # random initialize #time from last run
+        
+        self.intent =  round(init.intent_scale ** random.randrange(init.hour_to_intent), 3) #a value between 0.8 and 0.12
+        
+        self.efficacy = 0.001
+        
+        
+        with open(init.dict +'message_descriptors.json', 'r', encoding='utf-8') as file_handle:
+            self.messages = json.load(file_handle)
+
 
     def getMemory(self):
         return self.memory
+    
+        
 
     ##
     # decision whether run or not run
     ##
-    def isRun(self, action, state, index):
+    def isRun(self, action, message, state, index):
         """
-        :param action: 1 is send notification, 0 is not.
-        :param state: np.array(['Notification_left', 'Time_from_lastRun', 'Time_from_lastNotifi',
-                          'weekday', 'hour', 'Temperatuur', ''WeerType', 'WindType', 'LuchtvochtigheidType'])
-        :return: Boolean True = run, False = not run
+        Decide whether run or not run based on the current state and message.
 
         """
-        prob, weather_prob = self.computeProb(action, state, index)
+        prob, weather_prob, relevant = self.computeProb(action,message,state, index)
+
+        print('new self intent: ', self.intent)
+        print('prob: ', prob)
 
         if prob > 1.0:
             print("The probability of running is too high.")
-            return True, 1.0, weather_prob
+            print('run: ', True, '\n')
+            return True, 1.0, relevant
+        
         else:
-            return np.random.choice([True, False], 1, p=[prob, 1 - prob]), prob, weather_prob
+            run = np.random.choice([True, False], 1, p=[prob, 1 - prob])
+            print('run: ', run, '\n')
+            return run, prob, relevant
 
 
-    def computeProb(self, action, state, index):
-        # what we need eventually: calculate the probablity of engaging in PA based on context and given action
+    def computeProb(self, action, message, state, index):
+       
+        
+        print('self.intent existing: ', self.intent)
 
-        # we can select prob based on the different states 
-            # state: notification_left, time_from_lastRun, time_from_lastNotifi, weekday, hour, weather['Temperatuur', ''WeerType', 'WindType', 'LuchtvochtigheidType']
 
-            # e.g. they might prefer certain notifications at certain hour and this can also depend on 'time_from_lastRun' (i.e. from last PA) and weather (plus added symptoms)
 
-        # and actions (for now just 0 or 1)
+        for m in self.messages:
+            if m['ID'] == message:
+                mes_descr = m['descr']  # phase, determinant / feedback 
+                break
 
-        """Compute the probablity of run. P(Rt| At-1, Rt-1, Mt-1, Nt, Ct)
+       
+        # state: hour, state, BS, SE (0,1), regen 
+        time_lastPA = state[1]
+        bs = state[6]  # should increase PA likelihood
+        se = state[7]
+        user_state = [bs, se]
 
-        Args:
-            action (bool): send notification or not, True = sent, False =  not sent.
-            state (np.array): ['Notification_left', 'Time_from_lastRun', 'Time_from_lastNotifi',
-                          'weekday', 'hour', 'Temperatuur', ''WeerType', 'WindType', 'LuchtvochtigheidType']
-            last_run (bool): run or not in the last time step, True = run, False =  not run.
+        if se == 0:
+            self.efficacy = random.randrange(6,10) / 100
+        if se == 1:
+            self.efficacy = random.randrange(1,6) / 100
+        
 
-        Returns:
-            prob (float): probability of running, in [0,1].
+
+        # when it is the first hour in a day, update intent, so it's not the same as the previous day
+        print('INDEX, state1', index, state[1])
+        if index % init.max_decsionPerDay == 0:
+            self.intent = round(self.intent + init.intent_c * 6, 2) # + 0.3
+            print('self.intent after night: ', self.intent)
+
+        else:
+            self.intent = self.intent + init.intent_c
+        
+        
+        if bs == 1: 
+            self.intent = self.intent * 0.06 #2058/35000 = 0.06
+         
+        elif bs == 2:
+              self.intent = self.intent * 0.16 #5757/35000 = 0.16  
+              if self.efficacy == 1: 
+                self.efficacy += 0.2
+              
+        elif bs == 3:
+                 self.intent = self.intent * 0.43 # avg week + weekend / 5k*7: 7935+7283/35000 = 0.43
+                 if se == 1:
+                     self.efficacy += 0.3
+        
+
+
+
+
+        if action == 1:        
+            
+            if time_lastPA < 12 and mes_descr == [4,4]:  # if time_from_lastRun < 12 & got feedback
+                    #remove for training
+                
+                relevant = True
+                if se == 1:
+                    self.efficacy += 0.35 # added value of exercise
+                print('feedback', user_state, state[4])
+            
+            elif time_lastPA > 12 and user_state == mes_descr: #remove time restriction for training 
+                relevant = True
+                self.intent += 0.65
+                if se == 1:
+                    self.efficacy += 0.3
+                print('matching', user_state, state[4])
+         
+            else:
+                relevant = False
+                print('not matching ', user_state, mes_descr)
+            
+        else:
+            relevant = None
+            print('no message ')
+            # no effect on intent
+       
+       
+
+        if time_lastPA > 0 and time_lastPA <= 12:  # if time_from_lastRun was in the day
+            self.intent = 0.001
+            print('intent reset to 0.001', time_lastPA)
+            #potentially: increase self.efficacy
+
+        if self.efficacy == 0:
+            self.efficacy = 0.001
+    
+        
+        
+        weather_prob = 0 #self.getProb(state[3:9], action)
+        
+        total_prob = round(self.intent * self.efficacy , 3)
+        
+        return total_prob, weather_prob, relevant
+
+
+    def getProb(self, state): #context probability (from data)
+        """
+        Compute the probability of PA based on weather
+
         """
 
-        # get current urge value based on last_run and last_urge
-        if state[1] == 1:  # if time_from_lastRun == 1
-            self.urge = 0.001
-        else:
-            self.urge = self.urge + init.urge_scale
-            if self.urge > 1:
-                self.urge = 1.0
-
-        # when it is the first hour in a day, update memory and urge
-        if index % init.max_decsionPerDay == 0:
-            self.memory = self.memory * (init.memory_scale ** 12)
-            self.urge = self.urge + init.urge_scale * 12
-            if self.urge > 1.0:
-                self.urge = 1.0
-
-        # get current memory value based on action and last_memory
-        if action == 1:
-            self.memory = 1.0
-        else:
-            self.memory = self.memory * init.memory_scale
-
-        weather_prob = self.getProb(state[3:9])
-        total_prob = self.memory * self.urge * weather_prob * self.prob
-        #print('total_prob: ', total_prob, weather_prob)
-        return total_prob, weather_prob
-
-
-    def getProb(self, state):
-        """Compute the probability P(Ct | Rt = 1) / P(Ct) from data.
-
-            data saved in "/Users/Shihan/Desktop/Experiments/PAUL/rl/mylaps/weekday.csv"
-                        "/Users/Shihan/Desktop/Experiments/PAUL/rl/mylaps/model/"
-                        "/Users/Shihan/Desktop/Experiments/PAUL/rl/knmi/model/"
-            Args:
-                context (np.array): An array of context info ['Weekday', 'Hour', 'Temperatuur', 'WeerType', 'WindType', 'LuchtvochtigheidType'].
-
-            Returns:
-                prob (float): a probability in [0, ?) can be bigger than 1. !!!
-            """
-
-        inpath = init.dict
-
-        #weekday = context[:, 1][0]
-        #name = str(tuple(context[:, [3,4,5]][0]))
-        #data = context[:, [0,1]]
-
-        weekday = state[0]
-        name = str(tuple(state[3:])).replace('.0', '')
-        index = np.array([False, True, True, False, False, False])
-        data = state[index]
-        '''
-        f_weekday = inpath + "mylaps/weekday.csv"
-        df = pd.read_csv(f_weekday, encoding='utf-8-sig')
-
-        prob_weekday = df.loc[df['Weekday'] == weekday, 'num'].iloc[0]
-
-        f_knmi = inpath + "knmi/model/" + name + '.csv'
-        p_knmi = os.path.expanduser(f_knmi)
-        f_run = inpath + "mylaps/model/" + name + '.csv'
-        p_run = os.path.expanduser(f_run)
-
-        if os.path.exists(p_knmi):
-            model = pickle.load(open(p_knmi, 'rb'))
-            log_prob_knmi = model.score(data.reshape(1,-1))
-
-            if os.path.exists(p_run):
-                model = pickle.load(open(p_run, 'rb'))
-                log_prob_run = model.score(data.reshape(1,-1))
-            else:
-                return 0.001
-        else:
-            return 1.0
-
-        prob = prob_weekday * 7 * np.exp(log_prob_run - log_prob_knmi)
-
-        '''
-        prob = 0.7
-
-        return prob
+        return None
 

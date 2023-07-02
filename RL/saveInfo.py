@@ -3,6 +3,7 @@ import numpy as np
 import pandas as pd
 import csv
 import os
+import weekCalendar
 import __init__ as init
 
 """" Some functions to save information during the running of agents """
@@ -21,7 +22,7 @@ def saveInternal(calendar, i_run, i_episode, name):
     
     print ("Save detailed info of a week in files done!")
 
-def saveInternalLearning(calendar, i_run, i_episode, name):
+def saveInternalLearning(calendar, i_run, i_episode, name, total_episodes):
     """
         Save the learning detailed info of a week in files (not all episodes).
     """
@@ -32,9 +33,9 @@ def saveInternalLearning(calendar, i_run, i_episode, name):
     data = np.asarray(calendar.returnCalendar())
     
     # save every 50 episode or the end episode
-    if i_episode % 50 == 0 or i_episode == init.args.num_episodes - 1:
-        np.savetxt(path + str(i_run) + "_" + str(i_episode) + ".csv", data, delimiter=",", fmt='%s')
-        print ("Save learning detailed info of a week in files done!")
+    #if i_episode % 50 == 0 or i_episode == total_episodes - 1:
+    np.savetxt(path + str(i_run) + "_" + str(i_episode) + ".csv", data, delimiter=",", fmt='%s')
+    print ("Save learning detailed info of a week in files done!")
 
 def saveParameter(env, agent, name, i_run):
     """

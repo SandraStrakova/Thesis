@@ -23,31 +23,26 @@ class weekMatrix(): #object
             index_in_data (int): a random index of starting point in real data
     """
 
-    def __init__(self, n_width,  n_height, start_index_in_data, episode, df):
+    def __init__(self, n_width,  n_height, episode, df): #n_width = 7, n_height = 12, start_index_in_data = randrange(21600), episode = n
         self.grids = []
         self.n_height = n_height
         self.n_width = n_width
         self.len = n_width * n_height
-        self.index_in_data = np.random.randint(0, 3084) #start_index_in_data + episode * init.max_decsionPerWeek 
-                                                            #start_index = random_index from randrange(1700)
-                                                            #num episodes from init = 200
-                                                                #in the generateCalendar function, we loop over the number of episodes (for i in range(num)) -> i becomes the episode
-                                                                # max_decsionPerWeek = max_decsionPerDay * dayOfWeek -> 12 * 7 = 84
-                                                                # 1700 + 200 * 84 = 1700 + 16800 = 18500
+        self.max_index = df.shape[0]-84     #the array goes up to 17724
+        self.index_in_data =  np.random.choice(np.arange(0, self.max_index, 84)) 
 
         self.total_run = 0
         self.notification_left = init.max_notification # notification_per_day * dayOfWeek = 2 * 7 = 14
         self.reward_total = 0.0
-
-        for x in range(self.n_width):
+      
+        for x in range(self.n_width): # 7 days (0-6 index)
             for y in range(self.n_height):
-                self.grids.append(decisionPoint.decisionPoint(episode, x, y, self.readContext(self.index_in_data, init.max_decsionPerDay * x + y, df))) 
+                #self.grids.append(decisionPoint.decisionPoint(episode, x, y, self.readContext(self.index_in_data, init.max_decsionPerDay * x + y, df))) #+y # 12 * 7 + 12 = 96
+                self.grids.append(decisionPoint.decisionPoint(episode, x, y, self.readContext(self.index_in_data,init.max_decsionPerDay * x + y, df))) 
+                
 
-
-    def readContext(self, start_index, index, df):
-        # ['Weekday', 'Hour', 'Temperatuur', 'WeerType', 'WindType', 'LuchtvochtigheidType']
-        state = df.iloc[start_index] # + index]
-  
+    def readContext(self, start_index, index, df):     
+        state = df.iloc[start_index + index]
         return np.array(state)
 
     ##
@@ -58,7 +53,7 @@ class weekMatrix(): #object
         #print("index is ", index)	
         #print("len ", len(self.grids))
         return self.grids[index]
-
+    
     def setTotalRun(self, total_run):
         self.total_run = total_run
 
@@ -76,6 +71,9 @@ class weekMatrix(): #object
 
     def getTotalReward(self):
         return self.reward_total
+    
+    def getRandom_index(self):
+        return self.index_in_data
 
     # print the whole calendar
     def printCalendar(self):
