@@ -62,7 +62,7 @@ parser.add_argument('--seed', type=int, default=100, metavar='N',
                     help='random seed (default: 123)')
 parser.add_argument('--num_steps', type=int, default=100, metavar='N', #default=1000 #changing it here doesn't matter, the episode length is determined by is_End function in environment.py
                     help='max episode length (default: 1000)')
-parser.add_argument('--num_episodes', type=int, default=10, metavar='N', #default=20000
+parser.add_argument('--num_episodes', type=int, default=2000, metavar='N', #default=20000
                     help='number of episodes (default: 20000)')
 parser.add_argument('--test_episodes', type=int, default=100, metavar='N', #default=20000
                     help='number of testing episodes (default: 20000)')
