@@ -91,23 +91,24 @@ class Human(object):
             self.intent = round(self.intent + init.intent_c * 6, 2) # + 0.3
             print('self.intent after night: ', self.intent)
 
+        
+            if bs == 1: 
+                self.intent = self.intent * 0.06 #2058/35000 = 0.06
+                print('self.intent adjusted: ', self.intent)
+            
+            elif bs == 2:
+                self.intent = self.intent * 0.16 #5757/35000 = 0.16  
+                if self.efficacy == 1: 
+                    self.efficacy += 0.2
+                print('self.intent adjusted: ', self.intent)
+                
+            elif bs == 3:
+                    self.intent = self.intent * 0.43 # avg week + weekend / 5k*7: 7935+7283/35000 = 0.43
+                    if se == 1:
+                        self.efficacy += 0.3
+                    print('self.intent adjusted: ', self.intent)
         else:
             self.intent = self.intent + init.intent_c
-        
-        
-        if bs == 1: 
-            self.intent = self.intent * 0.06 #2058/35000 = 0.06
-         
-        elif bs == 2:
-              self.intent = self.intent * 0.16 #5757/35000 = 0.16  
-              if self.efficacy == 1: 
-                self.efficacy += 0.2
-              
-        elif bs == 3:
-                 self.intent = self.intent * 0.43 # avg week + weekend / 5k*7: 7935+7283/35000 = 0.43
-                 if se == 1:
-                     self.efficacy += 0.3
-        
 
 
 
